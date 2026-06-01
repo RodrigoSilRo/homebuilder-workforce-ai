@@ -2,7 +2,7 @@
 
 > A production-ready internal AI agent platform for a national homebuilder — built to demonstrate exactly what the **Agent Builder** role requires: multi-agent orchestration, enterprise data workflows, human-in-the-loop governance, MCP tool integration, and production observability.
 
-**Live demo:** [homebuilder-workforce-ai.onrender.com](https://homebuilder-workforce-ai.onrender.com) ← replace with your URL
+**Live demo:** [homebuilder-workforce-ai.onrender.com](https://homebuilder-workforce-ai.onrender.com)
 
 ---
 
