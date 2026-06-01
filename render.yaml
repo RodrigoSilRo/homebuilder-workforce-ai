@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: homebuilder-workforce-ai
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m database.seed_data && streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: homebuilder-db
+          property: connectionString
+    healthCheckPath: /_stcore/health
+
+databases:
+  - name: homebuilder-db
+    plan: free
+    region: oregon

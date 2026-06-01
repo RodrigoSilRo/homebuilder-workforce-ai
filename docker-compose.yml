@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - DATABASE_URL=postgresql://homebuilder:homebuilder@db:5432/homebuilder
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./.env:/app/.env:ro
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: homebuilder
+      POSTGRES_USER: homebuilder
+      POSTGRES_PASSWORD: homebuilder
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homebuilder"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mcp:
+    build: .
+    command: python -m mcp_server.server --transport http --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://homebuilder:homebuilder@db:5432/homebuilder
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
