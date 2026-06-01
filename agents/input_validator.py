@@ -40,6 +40,13 @@ DOMAIN_KEYWORDS = {
     "florida", "texas", "carolinas",
     "coral bay", "palm grove", "ocean vista",
     "cypress trails", "willow creek", "lakeside",
+    # Strategy / growth / expansion
+    "market", "markets", "expand", "expansion", "expand",
+    "growth", "grow", "strategy", "strategic",
+    "opportunity", "opportunities", "idea", "ideas",
+    "international", "region", "regional", "geographic",
+    "launch", "enter", "target", "competitive", "business",
+    "operations", "proposal",
     # Generic intent words that make sense in context
     "improve", "underperform", "performance", "analyze",
     "analysis", "report", "review", "recommend",
@@ -61,11 +68,13 @@ def validate_input(state: AgentState) -> dict:
         result = chat(
             system=(
                 "You are a domain validator for an internal homebuilder operations platform. "
-                "The platform handles: community sales, vendor approvals, construction delays, "
-                "incentive pricing, marketing campaigns, associate workflow guidance, "
-                "and governance/compliance.\n"
-                "Respond with VALID if the question is related to these topics. "
-                "Respond with INVALID for everything else.\n"
+                "The platform handles any business question a homebuilder might ask: "
+                "sales performance, vendor management, construction, incentive pricing, "
+                "marketing, associate workflows, governance, compliance, business strategy, "
+                "market expansion, growth opportunities, and operational decisions.\n"
+                "Respond with VALID for any reasonable business question. "
+                "Respond with INVALID only for clearly unrelated content "
+                "(recipes, personal advice, entertainment, etc.).\n"
                 "Answer with only one word: VALID or INVALID."
             ),
             user=prompt,
