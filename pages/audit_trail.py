@@ -1,3 +1,4 @@
+import json
 import streamlit as st
 import pandas as pd
 from tools.audit_tools import get_audit_events
@@ -55,41 +56,53 @@ filtered = [
     and (status_f== "All" or e["approval_status"]  == status_f)
 ]
 
-st.markdown(f"**{len(filtered)} event{'s' if len(filtered) != 1 else ''} shown** (of {len(all_events)} total in database)")
+st.markdown(f"**{len(filtered)} event{'s' if len(filtered) != 1 else ''} shown** (of {len(all_events)} total) · Click any row to expand details")
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Color maps ─────────────────────────────────────────────────────────────────
 RISK_COLORS   = {"high": "#dc2626", "medium": "#d97706", "low": "#16a34a"}
 STATUS_COLORS = {
-    "approved":  ("#dcfce7", "#166534"),
-    "rejected":  ("#fee2e2", "#991b1b"),
-    "escalated": ("#ede9fe", "#5b21b6"),
-    "pending":   ("#fef3c7", "#92400e"),
-    "n/a":       ("#f3f4f6", "#6b7280"),
+    "approved":  ("rgba(22,163,74,0.1)",   "#16a34a"),
+    "rejected":  ("rgba(220,38,38,0.1)",   "#dc2626"),
+    "escalated": ("rgba(124,58,237,0.1)",  "#7c3aed"),
+    "pending":   ("rgba(217,119,6,0.1)",   "#d97706"),
+    "n/a":       ("rgba(128,128,128,0.1)", "#6b7280"),
 }
 EVENT_ICONS = {
     "agent_run_started":    "▶",
     "agent_run_completed":  "✓",
-    "tool_called":          "🔧",
+    "tool_called":          "⚙",
     "approval_requested":   "⏳",
-    "approval_decision":    "✅",
-    "escalation_triggered": "⬆️",
-    "policy_enforced":      "🛡️",
-    "validation_complete":  "🔍",
-    "info_requested":       "ℹ️",
+    "approval_decision":    "✓",
+    "escalation_triggered": "↑",
+    "policy_enforced":      "◈",
+    "validation_complete":  "◎",
+    "info_requested":       "?",
 }
 
 for event in filtered:
-    rc  = RISK_COLORS.get(event["risk_level"], "#6b7280")
-    sbg, stc = STATUS_COLORS.get(event["approval_status"], ("#f3f4f6", "#6b7280"))
-    eicon = EVENT_ICONS.get(event["event_type"], "•")
+    rc        = RISK_COLORS.get(event["risk_level"], "#6b7280")
+    sbg, stc  = STATUS_COLORS.get(event["approval_status"], ("rgba(128,128,128,0.1)", "#6b7280"))
+    eicon     = EVENT_ICONS.get(event["event_type"], "·")
 
-    with st.container(border=True):
+    meta = {}
+    try:
+        meta = json.loads(event.get("metadata_json") or "{}")
+    except Exception:
+        pass
+
+    label = (
+        f"{eicon} &nbsp;`{event['event_type']}` &nbsp;·&nbsp; "
+        f"**{event['agent_name']}** &nbsp;·&nbsp; "
+        f"{event['timestamp'][:16]}"
+    )
+
+    with st.expander(label, expanded=False):
         rl, rr = st.columns([5, 2])
         with rl:
             st.markdown(
-                f"**{event['id']}** &nbsp;·&nbsp; `{event['event_type']}` {eicon} &nbsp;·&nbsp;"
-                f"<span style='color:{rc};font-weight:700;font-size:0.8rem;'>RISK: {event['risk_level'].upper()}</span>"
+                f"**{event['id']}** &nbsp;·&nbsp;"
+                f"<span style='color:{rc};font-weight:700;font-size:0.8rem;'> RISK: {event['risk_level'].upper()}</span>"
                 f" &nbsp;"
                 f"<span style='background:{sbg};color:{stc};border-radius:4px;"
                 f"padding:1px 8px;font-size:0.75rem;font-weight:600;'>{event['approval_status'].upper()}</span>",
@@ -101,7 +114,83 @@ for event in filtered:
                 f"<div style='opacity:0.5;font-size:0.83rem;text-align:right;'>{event['timestamp']}</div>",
                 unsafe_allow_html=True,
             )
+
         st.markdown(event["description"])
+
+        # ── Rich metadata for agent_run_completed ─────────────────────────────
+        if meta and event["event_type"] == "agent_run_completed":
+            st.markdown("---")
+
+            if meta.get("prompt"):
+                st.markdown(
+                    f"<div style='background:rgba(27,82,153,0.06);border-left:3px solid var(--primary-color);"
+                    f"padding:0.4rem 0.75rem;border-radius:0 4px 4px 0;font-size:0.9rem;margin-bottom:0.75rem;'>"
+                    f"<span style='opacity:0.55;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;'>Prompt</span><br>"
+                    f"{meta['prompt']}</div>",
+                    unsafe_allow_html=True,
+                )
+
+            cols_meta = st.columns([1, 1])
+            with cols_meta[0]:
+                if meta.get("agents_activated"):
+                    st.markdown("**Agents activated**")
+                    for a in meta["agents_activated"]:
+                        st.markdown(f"- {a}")
+
+            with cols_meta[1]:
+                if meta.get("validation"):
+                    v = meta["validation"]
+                    st.markdown("**Governance validation**")
+                    st.markdown(f"- Evidence: **{v.get('evidence_coverage', '—')}**")
+                    st.markdown(f"- Unsupported claims: **{v.get('unsupported_claims', '—')}**")
+                    if v.get("tools_used"):
+                        st.markdown(f"- Tools used: {', '.join(v['tools_used'])}")
+                    if v.get("approval_reason"):
+                        st.markdown(f"- Approval: {v['approval_reason']}")
+
+            if meta.get("agent_findings"):
+                st.markdown("**Agent findings**")
+                for agent_name, fd in meta["agent_findings"].items():
+                    tools = fd.get("tools_called", [])
+                    tools_str = (
+                        " &nbsp;" + " ".join(
+                            f"<span style='background:rgba(27,82,153,0.1);color:var(--primary-color);"
+                            f"border-radius:3px;padding:1px 7px;font-size:0.74rem;font-weight:600;'>{t}</span>"
+                            for t in tools
+                        ) if tools else ""
+                    )
+                    st.markdown(
+                        f"<div style='margin:0.35rem 0;'>"
+                        f"<span style='font-weight:700;font-size:0.88rem;'>{agent_name}</span>{tools_str}</div>",
+                        unsafe_allow_html=True,
+                    )
+                    if fd.get("finding"):
+                        st.markdown(
+                            f"<div style='background:rgba(128,128,128,0.06);border-left:3px solid rgba(128,128,128,0.25);"
+                            f"padding:0.35rem 0.7rem;margin:0.1rem 0 0.5rem 0;border-radius:0 4px 4px 0;"
+                            f"font-size:0.86rem;opacity:0.85;'>{fd['finding']}</div>",
+                            unsafe_allow_html=True,
+                        )
+
+            if meta.get("recommended_actions"):
+                st.markdown("**Recommended actions**")
+                for rec in meta["recommended_actions"]:
+                    r     = rec.get("risk", "low")
+                    rc2   = RISK_COLORS.get(r, "#6b7280")
+                    appr  = f" → Approver: {rec['approver']}" if rec.get("requires_approval") else " → Auto-proceed"
+                    st.markdown(
+                        f"<span style='color:{rc2};font-weight:700;font-size:0.78rem;'>[{r.upper()}]</span> "
+                        f"{rec.get('action','')}"
+                        f"<span style='opacity:0.5;font-size:0.82rem;'>{appr}</span>",
+                        unsafe_allow_html=True,
+                    )
+
+            if meta.get("final_response"):
+                st.markdown("**Executive summary**")
+                st.info(meta["final_response"])
+
+            if meta.get("created_aprs"):
+                st.caption(f"APRs created: {', '.join(meta['created_aprs'])}")
 
 st.markdown("---")
 
@@ -113,6 +202,7 @@ with col_a:
 with col_b:
     if filtered:
         df = pd.DataFrame(filtered)
+        df = df.drop(columns=["metadata_json"], errors="ignore")
         st.download_button(
             "⬇️ Download CSV",
             data=df.to_csv(index=False),

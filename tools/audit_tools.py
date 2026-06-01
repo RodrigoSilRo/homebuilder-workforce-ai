@@ -52,7 +52,7 @@ def get_audit_events(agent: str = None, event_type: str = None,
 
     return query(f"""
         SELECT id, timestamp, actor, agent_name, event_type, description,
-               risk_level, approval_status
+               risk_level, approval_status, metadata_json
         FROM audit_events
         WHERE {where}
         ORDER BY timestamp DESC

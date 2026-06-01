@@ -236,10 +236,19 @@ def finalize_node(state: AgentState) -> dict:
         except Exception:
             pass
 
+    final_response = state.get("final_response", "")
+    outputs        = state.get("agent_outputs", {})
+    validation     = state.get("validation_result", {})
+
     if run_id:
         execute(
-            "UPDATE agent_runs SET status='completed', risk_level=:r, approval_required=:a, completed_at=:ts WHERE id=:id",
-            {"r": risk, "a": 1 if approval else 0, "ts": datetime.now().isoformat(), "id": run_id},
+            "UPDATE agent_runs SET status='completed', risk_level=:r, approval_required=:a, "
+            "completed_at=:ts, final_response=:resp WHERE id=:id",
+            {
+                "r": risk, "a": 1 if approval else 0,
+                "ts": datetime.now().isoformat(),
+                "resp": final_response, "id": run_id,
+            },
         )
 
     log_audit_event(
@@ -249,6 +258,36 @@ def finalize_node(state: AgentState) -> dict:
         agent_name="Executive Orchestrator",
         risk_level=risk,
         approval_status="pending" if approval else "n/a",
+        metadata={
+            "prompt":       state.get("user_prompt", ""),
+            "prompt_type":  state.get("prompt_type", ""),
+            "agents_activated": state.get("selected_agents", []),
+            "agent_findings": {
+                name: {
+                    "finding":      out.get("finding", ""),
+                    "tools_called": out.get("tools_called", []),
+                }
+                for name, out in outputs.items()
+                if out.get("finding") and name != "Executive Orchestrator"
+            },
+            "validation": {
+                "evidence_coverage":  validation.get("evidence_coverage", ""),
+                "tools_used":         validation.get("tools_used", []),
+                "unsupported_claims": validation.get("unsupported_claims", ""),
+                "approval_reason":    validation.get("approval_reason", ""),
+            },
+            "recommended_actions": [
+                {
+                    "action":            r["action"],
+                    "risk":              r["risk"],
+                    "approver":          r.get("approver", "n/a"),
+                    "requires_approval": r.get("requires_approval", False),
+                }
+                for r in actions
+            ],
+            "created_aprs":   created_aprs,
+            "final_response": final_response,
+        },
     )
 
     return {
