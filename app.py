@@ -45,7 +45,7 @@ architecture = st.Page("pages/architecture.py",        title="Architecture",    
 
 pg = st.navigation({
     "": [landing],
-    "Agent Operations": [exec_center, marketplace, builder],
+    "Agent Operations": [exec_center, builder, marketplace],
     "Governance": [approval, audit],
     "Platform": [mcp, monitoring, architecture],
 })

@@ -1,7 +1,8 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 st.title("🏛️ Architecture")
-st.caption("Technical design, component overview, Palantir Foundry mapping, and AWS deployment architecture.")
+st.caption("Technical design, Mermaid diagram, Palantir Foundry mapping with 30-day migration plan, and AWS deployment architecture.")
 st.markdown("---")
 
 tab_diagram, tab_components, tab_foundry, tab_aws, tab_phases = st.tabs([
@@ -10,6 +11,118 @@ tab_diagram, tab_components, tab_foundry, tab_aws, tab_phases = st.tabs([
 
 # ── Tab: System Diagram ───────────────────────────────────────────────────────
 with tab_diagram:
+    st.subheader("LangGraph Multi-Agent Pipeline — Live Diagram")
+
+    mermaid_diagram = """
+flowchart TD
+    U([👤 User / Associate]) -->|Business Question| EO
+
+    subgraph ORCH[Executive Orchestrator]
+        direction LR
+        CL[Classify Request] --> PL[Create Plan]
+        PL --> RT[Route to Agents]
+    end
+
+    EO --- ORCH
+
+    RT --> CP[📊 Community Performance]
+    RT --> CD[🏗️ Construction Delay]
+    RT --> FI[💰 Finance / Incentive]
+    RT --> MC[📣 Marketing Campaign]
+    RT --> VA[🏢 Vendor Approval]
+    RT --> AP[👤 Associate Productivity]
+
+    subgraph TOOLS[MCP Tool Layer — 11 tools]
+        T1[get_community_metrics]
+        T2[get_construction_delays]
+        T3[calculate_incentive_impact]
+        T4[generate_marketing_campaign]
+        T5[get_vendor_profile / risk_score]
+        T6[get_policy_workflow + RAG]
+        T7[create_approval_request]
+    end
+
+    CP --> T1
+    CD --> T2
+    FI --> T3
+    MC --> T4
+    VA --> T5
+    AP --> T6
+    FI --> T7
+    VA --> T7
+
+    T1 & T2 & T3 & T4 & T5 & T6 & T7 --> DB[(PostgreSQL / SQLite)]
+    AP --> RAG[(ChromaDB RAG Index)]
+
+    CP & CD & FI & MC & VA & AP --> CG[🛡️ Critic / Governance Agent]
+    CG -->|Validated + Risk Level| SYNTH[LLM Synthesis\nGPT-4o-mini / Bedrock / Claude]
+    SYNTH --> AQ[✅ Approval Queue\nHuman-in-the-Loop]
+    AQ --> AT[📋 Audit Trail]
+    AQ --> MON[📊 Monitoring Dashboard]
+
+    style ORCH fill:#dbeafe,stroke:#2563eb
+    style TOOLS fill:#dcfce7,stroke:#16a34a
+    style CG fill:#fef3c7,stroke:#d97706
+    style AQ fill:#ede9fe,stroke:#7c3aed
+"""
+
+    components.html(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body {{ margin: 0; padding: 10px; background: white; font-family: sans-serif; }}
+  .mermaid {{ max-width: 100%; }}
+</style>
+</head>
+<body>
+<div class="mermaid">
+{mermaid_diagram}
+</div>
+<script>
+  mermaid.initialize({{
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {{
+      primaryColor: '#f0f9ff',
+      primaryBorderColor: '#2563eb',
+      fontFamily: 'sans-serif',
+      fontSize: '13px'
+    }}
+  }});
+</script>
+</body>
+</html>
+""", height=720, scrolling=True)
+
+    st.caption("Rendered with Mermaid.js. See also: ASCII diagram below.")
+
+    with st.expander("ASCII diagram (copy-paste friendly)", expanded=False):
+        st.markdown("""
+```
+User Request → Executive Orchestrator (LangGraph classify → route → synthesize → finalize)
+  ↓
+Specialist Agents (each skips if not selected)
+  ├─ Community Performance  → get_community_metrics, get_inventory_status, get_lead_conversion
+  ├─ Construction Delay     → get_construction_delays
+  ├─ Finance / Incentive    → calculate_incentive_impact  [enforces 1.5% margin policy]
+  ├─ Marketing Campaign     → generate_marketing_campaign
+  ├─ Vendor Approval        → get_vendor_profile, get_vendor_risk_score  [blocks expired insurance]
+  └─ Associate Productivity → get_policy_workflow  [ChromaDB RAG + OpenAI embeddings]
+  ↓
+MCP Tool Layer → PostgreSQL / SQLite + ChromaDB RAG Index
+  ↓
+Critic / Governance Agent  [validates evidence · enforces policies · assigns risk]
+  ↓
+LLM Synthesis  [GPT-4o-mini / Claude Haiku / AWS Bedrock]
+  ↓
+Finalize  [creates per-action approval_requests · writes audit_events]
+  ↓
+Approval Queue → Audit Trail → Monitoring Dashboard
+```
+""")
+
     st.subheader("LangGraph Multi-Agent Pipeline")
     st.markdown("""
 ```
@@ -168,22 +281,93 @@ with tab_foundry:
             st.markdown(item["detail"])
 
     st.markdown("---")
-    st.subheader("Why This Matters for Lennar")
+    st.subheader("30-Day Foundry Migration Plan")
+    st.info(
+        "Give me Foundry access on Day 1 and here is exactly what I deliver — "
+        "week by week — translating this platform into native AIP.",
+        icon="📅",
+    )
+
+    weeks = [
+        {
+            "week": "Week 1",
+            "title": "Ontology + Data Layer",
+            "foundry": "Foundry Object Types + Links",
+            "ours": "PostgreSQL schema (13 tables)",
+            "deliverable": (
+                "Model Community, Vendor, Policy, AgentRun, ApprovalRequest as Foundry Object Types. "
+                "Define Links between them (Community → Homes, AgentRun → ToolCalls). "
+                "Import seed data via Foundry Pipeline. "
+                "Output: Ontology with 8 object types, queryable from AIP."
+            ),
+        },
+        {
+            "week": "Week 2",
+            "title": "Function Registry + Tool Layer",
+            "foundry": "AIP Function Registry",
+            "ours": "MCP Tool Registry (11 tools)",
+            "deliverable": (
+                "Register all 11 tool functions in Foundry's Function Registry with typed input/output schemas. "
+                "Port the MCP server to Foundry Code Workspaces. "
+                "Wire each function to the Ontology objects (get_community_metrics reads from Community object type). "
+                "Output: 11 callable AIP Functions, testable from AIP Studio."
+            ),
+        },
+        {
+            "week": "Week 3",
+            "title": "Agent Blueprints + Logic",
+            "foundry": "AIP Agent Blueprints + AIP Logic",
+            "ours": "LangGraph graph + agent_configs",
+            "deliverable": (
+                "Define each of the 8 specialist agents as AIP Agent Blueprints with persona, allowed functions, "
+                "and approval rules. Port the LangGraph classification → routing → validation logic to AIP Logic. "
+                "Connect the Critic Agent as a validation step before any AIP Action is surfaced. "
+                "Output: Full multi-agent pipeline running natively in AIP."
+            ),
+        },
+        {
+            "week": "Week 4",
+            "title": "AIP Actions + Governance",
+            "foundry": "AIP Actions + Audit Log",
+            "ours": "Approval Queue + audit_events",
+            "deliverable": (
+                "Build AIP Actions for every approved recommendation type: "
+                "apply_incentive, launch_campaign, escalate_delay, approve_vendor. "
+                "Wire approval rules (contract > $50K → manager approval, margin > 1.0% → CFO). "
+                "Connect to Foundry Audit Log for immutable decision trail. "
+                "Output: Full human-in-the-loop AIP platform, production-ready."
+            ),
+        },
+    ]
+
+    for w in weeks:
+        with st.container(border=True):
+            wl, wr = st.columns([1, 4])
+            with wl:
+                st.markdown(
+                    f"<div style='background:#2563eb;color:white;border-radius:8px;"
+                    f"padding:0.5rem;text-align:center;font-weight:700;'>{w['week']}</div>",
+                    unsafe_allow_html=True,
+                )
+            with wr:
+                st.markdown(f"**{w['title']}**")
+                st.markdown(
+                    f"<span style='font-size:0.82rem;color:#6b7280;'>"
+                    f"Foundry: `{w['foundry']}` ← maps from: `{w['ours']}`</span>",
+                    unsafe_allow_html=True,
+                )
+            st.markdown(f"*Deliverable:* {w['deliverable']}")
+
+    st.markdown("---")
+    st.subheader("The Core Principle")
     st.markdown("""
-Lennar's Agent Builder role specifically requires experience with **Palantir Foundry AIP** —
-*Code Workspaces, AIP SDK, AIP Actions*.
+The primary difference between this platform and a native Foundry deployment is the runtime — Foundry is managed, proprietary, and enterprise-integrated. This platform is open, Python-first, and deployable anywhere.
 
-This platform demonstrates that I understand the AIP paradigm deeply:
+**The architectural concepts, design decisions, and production concerns are identical.**
 
-- **AIP Actions** (our Approval Queue) — the human-in-the-loop execution model where agents recommend, humans decide
-- **Function Registry** (our MCP tools) — typed, validated, callable functions with schemas
-- **Foundry Ontology** (our database schema) — enterprise data modeled as typed objects with relationships
-- **AIP Agent Blueprints** (our Agent Builder) — reusable, configurable agent definitions
-- **AIP Safety** (our Critic Agent) — governance, evidence validation, and output safety built in
+Every agent I've built here would work in AIP. Every approval rule I've defined maps to an AIP Action. Every tool in the MCP registry translates to a Foundry Function. The data model is already structured as an Ontology.
 
-The primary technical difference: Foundry is a proprietary platform with a managed runtime.
-This platform is open, Python-first, and deployable anywhere.
-The architectural concepts, design decisions, and production concerns are identical.
+I designed it this way intentionally.
     """)
 
 # ── Tab: AWS Architecture ─────────────────────────────────────────────────────

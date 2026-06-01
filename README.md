@@ -1,29 +1,36 @@
 # HomeBuilder Workforce AI
 
-**A production-style Python multi-agent platform for homebuilding operations, corporate workflow automation, and associate productivity.**
+> A production-ready internal AI agent platform for a national homebuilder — built to demonstrate exactly what the **Agent Builder** role requires: multi-agent orchestration, enterprise data workflows, human-in-the-loop governance, MCP tool integration, and production observability.
 
-Built with LangGraph, MCP, PostgreSQL, OpenAI/Claude API, Streamlit, and human-in-the-loop approval workflows.
-
----
-
-## One-Sentence Pitch
-
-HomeBuilder Workforce AI is a Python-based multi-agent platform for homebuilding companies that helps associates navigate workflows, automate corporate processes, analyze operational data, and execute human-approved actions through monitored, auditable AI agents.
+**Live demo:** [homebuilder-workforce-ai.onrender.com](https://homebuilder-workforce-ai.onrender.com) ← replace with your URL
 
 ---
 
-## Why This Exists
+## The Business Problem This Solves
 
-This platform demonstrates production-grade AI agent engineering applied to enterprise homebuilding operations. It is designed to show how AI agents can be deployed across corporate functions — not as a chatbot, but as a structured, governed workforce of specialized agents that operate within defined policies, require human approval for high-risk decisions, and leave a complete audit trail.
+A large homebuilder runs thousands of operational decisions every week — vendor approvals, community performance reviews, construction delay escalations, incentive authorizations, associate workflow questions. Today most of these require manual research, email chains, and spreadsheets.
 
-Every design decision maps to a real production concern:
+This platform deploys specialized AI agents to automate the investigation, synthesize the evidence, enforce the policies, and route to the right human for final approval — reducing decision cycle time while maintaining full governance and auditability.
 
-- LangGraph for reliable, observable multi-agent orchestration
-- PostgreSQL for enterprise-grade data persistence
-- MCP for standardized tool integration (callable from Claude Desktop, Cursor, or any MCP client)
-- Human-in-the-loop approval queues with escalation rules
-- Declarative eval cases with a drift detection dashboard
-- Governance agent that validates evidence before any recommendation is surfaced
+**This is not a chatbot. It is an internal AI workforce.**
+
+---
+
+## What It Demonstrates
+
+Every item on the Agent Builder job description is directly implemented:
+
+| Responsibility | Implementation |
+|---|---|
+| Agent personas, roles, workflows | 8 specialist agents with defined personas, tools, and approval rules |
+| Decision logic, triggers, escalation paths | LangGraph 10-node pipeline, 24h auto-escalation, risk-tier routing |
+| Human-in-the-loop rules | Per-action approval requests, Approve/Reject/Escalate with full audit |
+| LLMs + RAG + orchestration tools | GPT-4o-mini / Claude / AWS Bedrock + ChromaDB semantic policy search |
+| Tool invocations + API integration | 11 MCP tools, logged on every call, callable from Claude Desktop |
+| Monitoring / observability | Live dashboard: agent runs, tool latency, eval pass rates, drift detection |
+| Governance, audit trails, output safety | Critic agent, immutable audit_events table, policy enforcement |
+| Agent lifecycle + versioning | agent_configs table with version field, Agent Builder UI |
+| Documentation + workflow diagrams | See `docs/` folder: agent specs, workflow diagrams, Foundry migration plan |
 
 ---
 
@@ -32,74 +39,45 @@ Every design decision maps to a real production concern:
 ```
 User Request
     ↓
-Executive Orchestrator (LangGraph classify node)
+Executive Orchestrator  [LangGraph classify → route → synthesize → finalize]
     ↓
-Specialist Agents (run in sequence, skip if not selected)
-  ├── Community Performance Agent   → get_community_metrics, get_inventory_status, get_lead_conversion
-  ├── Construction Delay Agent      → get_construction_delays
-  ├── Finance / Incentive Agent     → calculate_incentive_impact
-  ├── Marketing Campaign Agent      → generate_marketing_campaign
-  ├── Vendor Approval Agent         → get_vendor_profile, get_vendor_risk_score
-  └── Associate Productivity Agent  → get_policy_workflow
+Specialist Agents  [run in parallel lanes, skip if not selected]
+  ├─ Community Performance  →  get_community_metrics, get_inventory_status, get_lead_conversion
+  ├─ Construction Delay     →  get_construction_delays
+  ├─ Finance / Incentive    →  calculate_incentive_impact  [enforces 1.5% margin limit]
+  ├─ Marketing Campaign     →  generate_marketing_campaign
+  ├─ Vendor Approval        →  get_vendor_profile, get_vendor_risk_score  [blocks expired insurance]
+  └─ Associate Productivity →  get_policy_workflow  [RAG: ChromaDB + OpenAI embeddings]
     ↓
-Critic / Governance Agent (validates evidence, assigns risk, enforces policies)
+Critic / Governance Agent  [validates evidence, enforces policies, assigns risk]
     ↓
-LLM Synthesis (GPT-4o-mini or Claude Haiku — or rule-based if no key)
+LLM Synthesis  [GPT-4o-mini / Claude Haiku / AWS Bedrock — swappable via services/llm.py]
     ↓
-Finalize Node (creates per-action approval requests, logs to DB)
+Finalize  [creates per-action approval_requests, writes to audit_events]
     ↓
 Approval Queue → Audit Trail → Monitoring Dashboard
 ```
 
-**MCP Tool Layer** sits between agents and data — all 11 tools are callable via `python -m mcp_server.server` from any MCP-compatible client.
+Full architecture diagram (Mermaid + Palantir Foundry mapping): see **Architecture** page in the app.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| UI | Streamlit |
-| Agent orchestration | LangGraph 1.2 |
-| LLM | OpenAI GPT-4o-mini / Anthropic Claude Haiku (configurable) |
-| Tool protocol | Python MCP SDK (FastMCP) |
-| Database | PostgreSQL (production) / SQLite (local dev, auto-configured) |
-| ORM / queries | SQLAlchemy 2.0 |
-| Validation | Pydantic (agent state) |
-| Data viz | Plotly |
-| Testing | pytest |
-| Containerization | Docker + Docker Compose |
-| Deployment | Render / Railway / Fly.io |
-| Language | Python 3.11+ |
+| Layer | Technology | Why |
+|---|---|---|
+| UI | Streamlit | Python-native, enterprise-ready, fast to iterate |
+| Agent orchestration | LangGraph 1.2 | Production-grade StateGraph, observable, deterministic |
+| Tool protocol | Python MCP SDK (FastMCP) | Model Context Protocol — connects to Claude Desktop, Cursor, any MCP client |
+| RAG | ChromaDB + OpenAI text-embedding-3-small | Semantic policy retrieval — closes the "retrieval-augmented frameworks" requirement |
+| LLM | OpenAI → Anthropic → AWS Bedrock | Priority routing, same interface via `services/llm.py` |
+| Database | PostgreSQL (prod) / SQLite (local) | Same SQLAlchemy queries, same schema — zero config locally |
+| Evals | pytest + custom declarative runner | 4 eval cases, 20 tests, 4/4 passing |
+| Deployment | Docker Compose + Render | `render.yaml` pre-configured |
 
 ---
 
-## Features
-
-### Agent Operations
-- **Executive Command Center** — prompt → LangGraph pipeline → live agent activity feed → evidence-backed recommendation → approve/reject/escalate
-- **Agent Marketplace** — 8 pre-built agents with defined roles, tools, approval rules, and example prompts
-- **Agent Builder** — define new agent configurations (name, persona, tools, approval rules, escalation rules, safety rules)
-
-### Governance
-- **Approval Queue** — per-action approval requests with overdue detection, auto-escalation after 24h, decision logging
-- **Audit Trail** — immutable event log of every agent run, tool call, approval decision, and escalation
-
-### Platform
-- **MCP Tool Registry** — 11 tools registered with FastMCP, callable from Claude Desktop or any MCP client
-- **Monitoring Dashboard** — KPIs, 30-day run chart, tool latency, eval pass/fail history, drift detection
-- **Architecture** — system diagram, component table, Palantir Foundry mapping
-
-### Eval Suite
-- 4 declarative eval cases (margin constraint, vendor risk, associate workflow, unsupported claim guardrail)
-- CLI runner (`python -m evals.run_evals`) and pytest suite (`pytest evals/test_agent_flows.py`)
-- Results persisted to `eval_runs` table for drift detection
-
----
-
-## Local Setup
-
-**Requirements:** Python 3.11+, pip
+## Quick Start (Local)
 
 ```bash
 git clone https://github.com/your-username/homebuilder-workforce-ai
@@ -107,10 +85,11 @@ cd homebuilder-workforce-ai
 
 pip install -r requirements.txt
 
-# Copy and fill in your API key (optional — app works without one)
+# Add your OpenAI key (app runs without it in rule-based mode)
 cp .env.example .env
+# Edit .env: OPENAI_API_KEY=sk-...
 
-# Start the app (auto-seeds DB on first run)
+# Start — auto-seeds DB and RAG index on first run
 python -m streamlit run app.py
 ```
 
@@ -118,63 +97,69 @@ Open http://localhost:8501
 
 ---
 
-## Environment Variables
+## Demo: Three Scenarios
+
+### 1. Homebuilding Operations
+> *"Why are South Florida communities underperforming this month, and what can we do without reducing gross margin by more than 1.5%?"*
+
+Watch: Community Performance → Construction Delay → Finance → Marketing agents fire in sequence. Finance agent blocks the 2.0% incentive scenario on policy. Critic validates evidence. LLM writes the executive summary from real data. Approval requests are auto-created for the recommended actions.
+
+### 2. Vendor Risk
+> *"Which vendor approvals need escalation?"*
+
+Watch: Vendor Approval agent flags Coastal Electrical LLC — expired insurance, risk score 78, $72K contract. Three escalation triggers fire. An approval request is auto-routed to VP Procurement. Check the Approval Queue immediately after.
+
+### 3. Associate Productivity + Governance
+> *"What workflow should an associate follow to onboard a new subcontractor?"*
+
+Watch: Associate Productivity agent performs semantic RAG search over the policy knowledge base. Returns the 7-step Vendor Onboarding workflow with approval thresholds and escalation rules. No LLM hallucination — every claim is grounded in a policy record from the database. Then show: Audit Trail → Monitoring Dashboard → Run All Evals.
+
+---
+
+## Palantir Foundry Readiness
+
+This platform maps 1:1 to Palantir AIP concepts by design:
+
+| This Platform | Foundry / AIP Equivalent |
+|---|---|
+| Approval Queue | AIP Actions |
+| MCP Tool Registry | Function Registry |
+| agent_configs table | AIP Agent Blueprints |
+| LangGraph StateGraph | AIP Logic / Pipeline |
+| PostgreSQL schema | Foundry Ontology |
+| Audit Trail | Foundry Audit Log |
+| Agent Builder UI | AIP Studio |
+
+See `docs/foundry_migration_plan.md` for the full 30-day translation plan.
+
+---
+
+## Running Evals
 
 ```bash
-# LLM (optional — app runs in rule-based mode without a key)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...    # Alternative to OpenAI
+# All 4 eval cases — 4/4 passing
+python -m evals.run_evals --verbose
 
-# Database (optional — SQLite used by default for local dev)
-DATABASE_URL=postgresql://user:password@localhost:5432/homebuilder
+# pytest suite — 20 tests
+pytest evals/test_agent_flows.py -v
 ```
+
+**Eval cases:**
+- `EVAL-001` — Margin constraint enforcement (blocks 2.0% incentive) — PASS
+- `EVAL-002` — Vendor approval high risk (expired insurance → blocks) — PASS
+- `EVAL-003` — Associate workflow guidance (RAG policy retrieval) — PASS
+- `EVAL-004` — Unsupported claim guardrail (Critic requires evidence) — PASS
 
 ---
 
-## Database Setup
-
-The database is auto-initialized and seeded on first app startup. To manually seed:
+## MCP Server (Claude Desktop Integration)
 
 ```bash
-python -m database.seed_data
+# Start the MCP server
+python -m mcp_server.server
+
+# Add to Claude Desktop (~/.claude/claude_desktop_config.json):
 ```
-
-**Seeded data:**
-- 6 communities (South Florida, Central Florida, Texas, Carolinas)
-- 239 homes with realistic days-on-market and margin data
-- 525 leads with community-specific conversion rates
-- 19 active construction delays (Ocean Vista critical, Willow Creek medium)
-- 5 vendors (Coastal Electrical LLC flagged: expired insurance, risk score 78)
-- 5 policies (vendor onboarding, invoice approval, marketing campaign, construction delay, incentive)
-- 47 historical agent runs + 150+ tool call records for monitoring charts
-- 6 approval requests across all risk levels
-- 15 audit events with full event type coverage
-- 4 eval cases
-
-**PostgreSQL migration:** Set `DATABASE_URL` in `.env` and the app uses it automatically. Schema is compatible with both SQLite and PostgreSQL.
-
----
-
-## Agent Architecture
-
-Each specialist agent:
-1. Checks whether it's in `selected_agents` — if not, passes through the graph node without executing
-2. Calls its tools (all tool calls are logged to `tool_calls` table automatically)
-3. Formats findings into a structured output dict
-4. Updates shared `AgentState` (tool_results, agent_outputs, risk_level, approval_required)
-
-The **Critic / Governance Agent** always runs last before synthesis:
-- Validates evidence coverage (were tools called before any claim?)
-- Detects unsupported attributions
-- Evaluates 5 approval trigger rules (incentive > 1.0% margin, vendor insurance expired, >10 closings affected, customer-facing campaign, vendor contract > $50K)
-- Assigns risk level and approval_required flag
-
----
-
-## MCP Tools
-
-All 11 tools are exposed via the MCP server. Connect from Claude Desktop by adding to your config:
-
 ```json
 {
   "mcpServers": {
@@ -187,134 +172,51 @@ All 11 tools are exposed via the MCP server. Connect from Claude Desktop by addi
 }
 ```
 
-**Available tools:**
-`get_community_metrics` · `get_inventory_status` · `get_lead_conversion` · `get_construction_delays` · `calculate_incentive_impact` · `get_vendor_profile` · `get_vendor_risk_score` · `get_policy_workflow` · `create_approval_request` · `generate_marketing_campaign` · `create_executive_report`
-
----
-
-## Monitoring & Governance
-
-**Monitoring Dashboard** tracks:
-- Total agent runs, success rate, failed tool calls, avg latency
-- Agent runs over time (30-day chart)
-- Tool latency and reliability per tool
-- Approval rate, escalation rate
-- Eval pass/fail history and drift detection chart
-
-**Approval Rules:**
-- Contract value > $50,000 → Regional Operations Manager approval
-- Contract value > $200,000 → VP Procurement approval
-- Margin impact > 0.5% → VP Sales approval
-- Margin impact > 1.0% → CFO approval
-- Margin impact > 1.5% → blocked by policy
-- Customer-facing campaign → Marketing Director approval
-- Vendor insurance expired → blocked until renewed
-- Construction delay > 10 closings → VP Operations notification
-
-**Escalation Rules:**
-- Pending approval > 24 hours → auto-escalate to next approver level
-- High-risk vendor → immediate VP Procurement routing
-- Critical construction delay → auto-escalate
-
----
-
-## Running Evals
-
-```bash
-# Run all evals with verbose output
-python -m evals.run_evals --verbose
-
-# Run a specific eval
-python -m evals.run_evals --eval EVAL-001
-
-# Run as pytest
-pytest evals/test_agent_flows.py -v
-```
-
-**Eval cases:**
-- `EVAL-001` — Margin Constraint Enforcement (Finance, CRITICAL)
-- `EVAL-002` — Vendor Approval High Risk (Procurement, CRITICAL)
-- `EVAL-003` — Associate Workflow Guidance (Compliance, HIGH)
-- `EVAL-004` — Unsupported Claim Guardrail (Governance, HIGH)
+Then ask Claude: *"Use get_community_metrics for South Florida"* — it calls your local database and returns real data.
 
 ---
 
 ## Docker
 
-**Local (SQLite):**
 ```bash
+# Local with PostgreSQL
+docker compose up
+
+# Single container (SQLite)
 docker build -t homebuilder-workforce-ai .
 docker run -p 8501:8501 -e OPENAI_API_KEY=sk-... homebuilder-workforce-ai
 ```
 
-**With PostgreSQL:**
+---
+
+## Environment Variables
+
 ```bash
-docker compose up
+OPENAI_API_KEY=sk-...           # Primary LLM — GPT-4o-mini
+ANTHROPIC_API_KEY=sk-ant-...    # Alternative — Claude Haiku
+AWS_ACCESS_KEY_ID=...           # AWS Bedrock option
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1
+AWS_BEDROCK_MODEL=anthropic.claude-haiku-4-5-20251001-v1:0
+DATABASE_URL=postgresql://...   # Production PostgreSQL (SQLite default locally)
 ```
 
 ---
 
-## Deployment
+## Documentation
 
-**Render (recommended for demo):**
-```bash
-# Push to GitHub, connect repo to Render, set env vars in dashboard
-# render.yaml is pre-configured
 ```
-
-**Railway:**
-```bash
-railway login
-railway init
-railway up
-```
-
-**Fly.io:**
-```bash
-fly launch
-fly secrets set OPENAI_API_KEY=sk-...
-fly deploy
+docs/
+  agent_specs.md          — Full specification for all 8 agents
+  workflow_diagrams.md    — Key workflow diagrams (vendor onboarding, incentive approval, etc.)
+  demo_script.md          — Structured demo walkthrough
+  foundry_migration_plan.md — 30-day plan to deploy this on Palantir Foundry
 ```
 
 ---
 
-## Demo Script
+## Built By
 
-### Demo 1 — Associate Productivity
-**Prompt:** *What workflow should an associate follow to onboard a new subcontractor?*
+**Rodrigo Rosa** — Software Engineer & Technical Founder
 
-Watch the Associate Productivity Agent retrieve the 7-step vendor onboarding policy from the DB, identify required approvers, and surface the escalation rules.
-
-### Demo 2 — Homebuilding Operations
-**Prompt:** *Why are South Florida communities underperforming this month?*
-
-Watch Community Performance, Construction Delay, and Marketing agents fire in sequence. The Critic validates evidence. The LLM synthesizes a data-backed executive summary. Approval requests are auto-created for the campaign recommendation.
-
-### Demo 3 — Vendor Risk
-**Prompt:** *Which vendor approvals need escalation?*
-
-Coastal Electrical LLC is flagged: expired insurance, risk score 78, $72K contract. High-risk routing fires automatically. Check the Approval Queue — a new APR appears.
-
-### Demo 4 — Governance
-Show: Approval Queue → approve an action → Audit Trail → see the decision logged → Monitoring Dashboard → run all evals.
-
----
-
-## Future Improvements
-
-- pgvector RAG for semantic policy retrieval
-- AWS Bedrock as LLM backend option
-- Full dynamic Agent Builder (live graph compilation)
-- Auth layer (Streamlit + JWT or Clerk)
-- PDF executive report export
-- Slack/Teams notification webhooks for approval requests
-- A/B eval comparison across LLM model versions
-- Palantir Foundry AIP Actions integration
-
----
-
-## Author
-
-Built by **Rodrigo Rosa** — Software Engineer & Technical Founder
-
-> HomeBuilder Workforce AI is a production-style multi-agent platform designed around enterprise homebuilding operations. It demonstrates how AI agents can support associate productivity, vendor approvals, operational intelligence, human-in-the-loop workflows, MCP-based tool integration, monitoring, governance, and auditability.
+> HomeBuilder Workforce AI is a production-style multi-agent platform that demonstrates how AI agents can be deployed responsibly across enterprise homebuilding operations — with proper governance, human oversight, and the kind of auditability that legal and compliance teams actually require.

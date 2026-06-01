@@ -28,7 +28,8 @@ col_hero, col_cta = st.columns([2, 1], gap="large")
 with col_hero:
     st.markdown('<div class="hero-title">HomeBuilder Workforce AI</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="hero-sub">AI agents for homebuilding operations, corporate workflows, and associate productivity.</div>',
+        '<div class="hero-sub">The internal AI agent platform a national homebuilder would actually build — '
+        'multi-agent orchestration, enterprise governance, human-in-the-loop approvals, and full auditability.</div>',
         unsafe_allow_html=True,
     )
     st.markdown("<br>", unsafe_allow_html=True)
