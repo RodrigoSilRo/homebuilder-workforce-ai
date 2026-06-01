@@ -72,9 +72,9 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ── Color maps ─────────────────────────────────────────────────────────────────
 STATUS_COLORS = {
     "pending":   ("rgba(217,119,6,0.12)",  "#d97706", "⏳"),
-    "approved":  ("rgba(22,163,74,0.12)",  "#16a34a", "✓"),
-    "rejected":  ("rgba(220,38,38,0.12)",  "#dc2626", "✕"),
-    "escalated": ("rgba(124,58,237,0.12)", "#7c3aed", "↑"),
+    "approved":  ("rgba(22,163,74,0.12)",  "#16a34a", "✅"),
+    "rejected":  ("rgba(220,38,38,0.12)",  "#dc2626", "🚫"),
+    "escalated": ("rgba(124,58,237,0.12)", "#7c3aed", "⬆️"),
 }
 RISK_COLORS = {"high": "#dc2626", "medium": "#d97706", "low": "#16a34a"}
 

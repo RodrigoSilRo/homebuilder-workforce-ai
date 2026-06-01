@@ -72,9 +72,9 @@ with col_hero:
 with col_cta:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     if has_llm():
-        st.success("LLM active", icon="✓")
+        st.success("LLM active")
     else:
-        st.info("Rule-based mode — add API key for LLM", icon="ℹ️")
+        st.info("Rule-based mode — add API key for LLM")
 
 st.markdown('<hr class="divider">', unsafe_allow_html=True)
 
