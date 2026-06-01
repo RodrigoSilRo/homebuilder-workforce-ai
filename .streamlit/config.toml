@@ -1,0 +1,6 @@
+[server]
+headless = true
+sanitize_html = false
+
+[browser]
+gatherUsageStats = false
