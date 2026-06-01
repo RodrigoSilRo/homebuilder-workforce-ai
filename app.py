@@ -43,6 +43,13 @@ mcp          = st.Page("pages/mcp_tool_registry.py",   title="MCP Tool Registry"
 monitoring   = st.Page("pages/monitoring_dashboard.py",title="Monitoring Dashboard",      icon="📊")
 architecture = st.Page("pages/architecture.py",        title="Architecture",              icon="🏛️")
 
+st.markdown("""
+<style>
+[data-testid="stSidebarNavItems"] { max-height: none !important; overflow: visible !important; }
+[data-testid="stSidebarNavMoreItem"] { display: none !important; }
+</style>
+""", unsafe_allow_html=True)
+
 pg = st.navigation({
     "": [landing],
     "Agent Operations": [exec_center, builder, marketplace],
