@@ -164,6 +164,10 @@ with left:
 
     # ── Early exit if input was rejected ─────────────────────────────────────
     if not final_state.get("input_valid", True):
+        execute(
+            "UPDATE agent_runs SET status='failed', completed_at=:ts WHERE id=:id",
+            {"ts": datetime.now().isoformat(), "id": run_id},
+        )
         st.warning(
             final_state.get("final_response",
                 "This platform handles homebuilder business operations only."),
@@ -289,7 +293,7 @@ with right:
     else:
         execute("UPDATE agent_runs SET status='completed', risk_level=:r WHERE id=:id",
                 {"r": risk, "id": run_id})
-        st.info("No human approval required for this run.", icon="✓")
+        st.info("No human approval required for this run.")
 
     st.markdown("---")
     st.caption(
