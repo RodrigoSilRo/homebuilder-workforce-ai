@@ -1,26 +1,33 @@
+import json
 import streamlit as st
+from database.db import query, execute
 
 st.title("🔧 Agent Builder")
-st.caption("Define a new AI agent by specifying its role, tools, data sources, and governance rules. Configurations are stored and used by the generic agent runner.")
+st.caption("Define a new AI agent by specifying its role, tools, data sources, and governance rules. Configurations are saved to the database.")
 st.markdown("---")
 
-if "saved_agents" not in st.session_state:
-    st.session_state.saved_agents = [
-        {
-            "name": "Vendor Risk Review Agent",
-            "function": "Procurement",
-            "persona": "Procurement Risk Analyst",
-            "trigger": "New vendor request submitted",
-            "tools": ["get_vendor_profile", "get_vendor_risk_score", "create_approval_request"],
-            "data_sources": ["vendors", "policies"],
-            "approval_rule": "Required for contracts > $50,000",
-            "escalation_rule": "Escalate if pending approval > 24 hours",
-            "safety_rule": "Do not approve vendors with missing or expired insurance",
-            "output_format": "Structured JSON with vendor summary, risk assessment, and recommendation",
-            "version": "1.0",
-            "status": "active",
-        },
-    ]
+
+@st.cache_data(ttl=5)
+def load_agents():
+    rows = query("SELECT * FROM agent_configs ORDER BY id")
+    result = []
+    for r in rows:
+        result.append({
+            "id":             r["id"],
+            "name":           r["name"],
+            "function":       r.get("business_function") or "",
+            "persona":        r.get("persona") or "AI Agent",
+            "trigger":        r.get("trigger_description") or "Manual trigger",
+            "tools":          json.loads(r.get("allowed_tools_json") or "[]"),
+            "approval_rule":  r.get("approval_rule") or "None defined",
+            "escalation_rule":r.get("escalation_rule") or "None defined",
+            "safety_rule":    r.get("safety_rule") or "None defined",
+            "output_format":  r.get("output_format") or "Free Text",
+            "version":        r.get("version") or "1.0",
+            "status":         "active" if r.get("active", 1) else "inactive",
+        })
+    return result
+
 
 left, right = st.columns([2, 3], gap="large")
 
@@ -43,11 +50,6 @@ with left:
             "generate_marketing_campaign", "create_executive_report",
         ]
         tools = st.multiselect("Allowed Tools", all_tools)
-
-        data_sources = st.multiselect(
-            "Data Sources",
-            ["communities", "homes", "leads", "vendors", "policies", "construction_delays", "marketing_campaigns"],
-        )
 
         approval_rule = st.text_input(
             "Human Approval Rule",
@@ -72,68 +74,74 @@ with left:
             if not name or not function:
                 st.error("Agent Name and Business Function are required.")
             else:
-                new_agent = {
-                    "name": name,
-                    "function": function,
+                execute("""
+                    INSERT INTO agent_configs
+                      (name, business_function, persona, trigger_description, allowed_tools_json,
+                       approval_rule, escalation_rule, safety_rule, output_format, version, active)
+                    VALUES
+                      (:name, :func, :persona, :trigger, :tools,
+                       :appr, :esc, :safety, :fmt, '1.0', 1)
+                """, {
+                    "name":    name,
+                    "func":    function,
                     "persona": persona or "AI Agent",
                     "trigger": trigger or "Manual trigger",
-                    "tools": tools,
-                    "data_sources": data_sources,
-                    "approval_rule": approval_rule or "None defined",
-                    "escalation_rule": escalation_rule or "None defined",
-                    "safety_rule": safety_rule or "None defined",
-                    "output_format": output_format,
-                    "version": "1.0",
-                    "status": "active",
-                }
-                st.session_state.saved_agents.append(new_agent)
-                st.success(f"Agent '{name}' saved successfully.")
+                    "tools":   json.dumps(tools),
+                    "appr":    approval_rule or "None defined",
+                    "esc":     escalation_rule or "None defined",
+                    "safety":  safety_rule or "None defined",
+                    "fmt":     output_format,
+                })
+                st.cache_data.clear()
+                st.success(f"Agent '{name}' saved to database.")
 
 with right:
     st.subheader("Saved Agent Configurations")
 
-    for i, agent in enumerate(st.session_state.saved_agents):
-        with st.expander(f"**{agent['name']}** — {agent['function']} · v{agent['version']}", expanded=(i == 0)):
-            r1, r2 = st.columns(2)
-            with r1:
-                st.markdown(f"**Persona:** {agent['persona']}")
-                st.markdown(f"**Trigger:** {agent['trigger']}")
-                st.markdown(f"**Version:** {agent['version']}")
-                st.markdown(
-                    f"**Status:** <span style='color:#16a34a;font-weight:700;'>{agent['status'].upper()}</span>",
-                    unsafe_allow_html=True,
-                )
-            with r2:
-                st.markdown(f"**Approval Rule:** {agent['approval_rule']}")
-                st.markdown(f"**Escalation Rule:** {agent['escalation_rule']}")
-                st.markdown(f"**Safety Rule:** {agent['safety_rule']}")
-                st.markdown(f"**Output Format:** {agent['output_format']}")
+    saved_agents = load_agents()
 
-            if agent["tools"]:
-                st.markdown("**Allowed Tools:**")
-                pills = " ".join(
-                    f"<span style='background:rgba(27,82,153,0.1);color:var(--primary-color);border-radius:4px;"
-                    f"padding:2px 9px;font-size:0.77rem;font-weight:600;margin:2px;'>{t}</span>"
-                    for t in agent["tools"]
-                )
-                st.markdown(pills, unsafe_allow_html=True)
+    if not saved_agents:
+        st.info("No agent configurations found.")
+    else:
+        for agent in saved_agents:
+            with st.expander(f"**{agent['name']}** — {agent['function']} · v{agent['version']}", expanded=False):
+                r1, r2 = st.columns(2)
+                with r1:
+                    st.markdown(f"**Persona:** {agent['persona']}")
+                    st.markdown(f"**Trigger:** {agent['trigger']}")
+                    st.markdown(f"**Version:** {agent['version']}")
+                    status_color = "#16a34a" if agent["status"] == "active" else "#6b7280"
+                    st.markdown(
+                        f"**Status:** <span style='color:{status_color};font-weight:700;'>{agent['status'].upper()}</span>",
+                        unsafe_allow_html=True,
+                    )
+                with r2:
+                    st.markdown(f"**Approval Rule:** {agent['approval_rule']}")
+                    st.markdown(f"**Escalation Rule:** {agent['escalation_rule']}")
+                    st.markdown(f"**Safety Rule:** {agent['safety_rule']}")
+                    st.markdown(f"**Output Format:** {agent['output_format']}")
 
-            if agent["data_sources"]:
-                st.markdown("**Data Sources:**")
-                ds_pills = " ".join(
-                    f"<span style='background:rgba(128,128,128,0.1);border:1px solid rgba(128,128,128,0.2);border-radius:4px;"
-                    f"padding:2px 9px;font-size:0.77rem;margin:2px;'>{d}</span>"
-                    for d in agent["data_sources"]
-                )
-                st.markdown(ds_pills, unsafe_allow_html=True)
+                if agent["tools"]:
+                    st.markdown("**Allowed Tools:**")
+                    pills = " ".join(
+                        f"<span style='background:rgba(27,82,153,0.1);color:var(--primary-color);border-radius:4px;"
+                        f"padding:2px 9px;font-size:0.77rem;font-weight:600;margin:2px;'>{t}</span>"
+                        for t in agent["tools"]
+                    )
+                    st.markdown(pills, unsafe_allow_html=True)
 
-            st.markdown("<br>", unsafe_allow_html=True)
-            dc1, dc2 = st.columns(2)
-            with dc1:
-                if st.button("Deploy to Runner", key=f"deploy_{i}", use_container_width=True, type="primary"):
-                    st.success(f"'{agent['name']}' deployed to agent runner.")
-            with dc2:
-                if st.button("View in Marketplace", key=f"view_{i}", use_container_width=True):
-                    st.switch_page("pages/agent_marketplace.py")
+                st.markdown("<br>", unsafe_allow_html=True)
+                dc1, dc2 = st.columns(2)
+                with dc1:
+                    if st.button("Deploy to Runner", key=f"deploy_{agent['id']}", use_container_width=True, type="primary"):
+                        execute(
+                            "UPDATE agent_configs SET active=1 WHERE id=:id",
+                            {"id": agent["id"]},
+                        )
+                        st.cache_data.clear()
+                        st.success(f"'{agent['name']}' is active in the registry.")
+                with dc2:
+                    if st.button("View in Marketplace", key=f"view_{agent['id']}", use_container_width=True):
+                        st.switch_page("pages/agent_marketplace.py")
 
 st.markdown("---")

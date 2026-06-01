@@ -1,39 +1,70 @@
 """
 HomeBuilder Workforce AI — LangGraph Supervisor Graph
 
-Graph structure (linear pipeline, each specialist skips itself if not selected):
-  classify → community_performance → construction_delay → finance_incentive
-           → marketing_campaign → vendor_approval → associate_productivity
-           → critic_validate → generate_response → finalize → END
+Graph structure:
+  validate_input → [conditional]
+      ├─ reject_input → END          (off-topic / invalid input)
+      └─ classify
+           └─ community_performance → construction_delay → finance_incentive
+                → marketing_campaign → vendor_approval → associate_productivity
+                → critic_validate → generate_response → finalize → END
 """
 from langgraph.graph import StateGraph, END
 from agents.state import AgentState
 
 
+def _route_after_validation(state: AgentState) -> str:
+    return "classify" if state.get("input_valid", True) else "reject_input"
+
+
+def _reject_input_node(state: AgentState) -> dict:
+    return {
+        "final_response": (
+            "This platform handles homebuilder business operations only: "
+            "community sales performance, vendor approvals, construction delays, "
+            "incentive pricing, marketing campaigns, associate workflow guidance, "
+            "and governance. Please ask a question related to one of these domains."
+        ),
+        "risk_level":         "low",
+        "approval_required":  False,
+        "recommended_actions": [],
+        "agent_outputs":      {},
+    }
+
+
 def build_graph():
-    from agents.executive           import classify_node, generate_response_node, finalize_node
-    from agents.community_performance import run as community_run
-    from agents.construction_delay  import run as delay_run
-    from agents.finance_incentive   import run as finance_run
-    from agents.marketing_campaign  import run as marketing_run
-    from agents.vendor_approval     import run as vendor_run
+    from agents.input_validator        import validate_input
+    from agents.executive              import classify_node, generate_response_node, finalize_node
+    from agents.community_performance  import run as community_run
+    from agents.construction_delay     import run as delay_run
+    from agents.finance_incentive      import run as finance_run
+    from agents.marketing_campaign     import run as marketing_run
+    from agents.vendor_approval        import run as vendor_run
     from agents.associate_productivity import run as associate_run
-    from agents.critic              import validate as critic_run
+    from agents.critic                 import validate as critic_run
 
     wf = StateGraph(AgentState)
 
-    wf.add_node("classify",                classify_node)
-    wf.add_node("community_performance",   community_run)
-    wf.add_node("construction_delay",      delay_run)
-    wf.add_node("finance_incentive",       finance_run)
-    wf.add_node("marketing_campaign",      marketing_run)
-    wf.add_node("vendor_approval",         vendor_run)
-    wf.add_node("associate_productivity",  associate_run)
-    wf.add_node("critic_validate",         critic_run)
-    wf.add_node("generate_response",       generate_response_node)
-    wf.add_node("finalize",                finalize_node)
+    wf.add_node("validate_input",         validate_input)
+    wf.add_node("reject_input",           _reject_input_node)
+    wf.add_node("classify",               classify_node)
+    wf.add_node("community_performance",  community_run)
+    wf.add_node("construction_delay",     delay_run)
+    wf.add_node("finance_incentive",      finance_run)
+    wf.add_node("marketing_campaign",     marketing_run)
+    wf.add_node("vendor_approval",        vendor_run)
+    wf.add_node("associate_productivity", associate_run)
+    wf.add_node("critic_validate",        critic_run)
+    wf.add_node("generate_response",      generate_response_node)
+    wf.add_node("finalize",               finalize_node)
 
-    wf.set_entry_point("classify")
+    wf.set_entry_point("validate_input")
+    wf.add_conditional_edges(
+        "validate_input",
+        _route_after_validation,
+        {"classify": "classify", "reject_input": "reject_input"},
+    )
+    wf.add_edge("reject_input",           END)
     wf.add_edge("classify",               "community_performance")
     wf.add_edge("community_performance",  "construction_delay")
     wf.add_edge("construction_delay",     "finance_incentive")

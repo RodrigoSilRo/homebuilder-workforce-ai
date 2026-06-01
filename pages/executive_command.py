@@ -162,6 +162,15 @@ with left:
         st.error(f"Graph execution error: {e}")
         execute("UPDATE agent_runs SET status='failed' WHERE id=:id", {"id": run_id})
 
+    # ── Early exit if input was rejected ─────────────────────────────────────
+    if not final_state.get("input_valid", True):
+        st.warning(
+            final_state.get("final_response",
+                "This platform handles homebuilder business operations only."),
+            icon="🚫",
+        )
+        st.stop()
+
     # ── Critic summary box ────────────────────────────────────────────────────
     validation = final_state.get("validation_result", {})
     risk = final_state.get("risk_level", "low")

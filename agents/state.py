@@ -23,6 +23,9 @@ class AgentState(TypedDict, total=False):
     recommended_actions: list # [{action, risk, requires_approval, approver}]
     final_response: str       # executive summary (LLM-generated or rule-based)
 
+    # Input validation
+    input_valid: bool          # False → pipeline short-circuits to rejection node
+
     # Metadata
     audit_metadata: dict
     error: str
