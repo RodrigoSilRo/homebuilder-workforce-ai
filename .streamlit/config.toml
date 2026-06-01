@@ -4,3 +4,7 @@ sanitize_html = false
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+primaryColor = "#1B5299"
+font = "sans serif"
