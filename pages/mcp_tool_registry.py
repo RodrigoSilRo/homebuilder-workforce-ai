@@ -45,7 +45,7 @@ clients = ["Claude Desktop", "Cursor", "Windsurf", "Continue.dev", "Any MCP SDK 
 cols = st.columns(len(clients))
 for col, client in zip(cols, clients):
     col.markdown(
-        f"<div style='background:#f3f4f6;border-radius:6px;padding:6px 10px;"
+        f"<div style='background:rgba(128,128,128,0.1);border-radius:6px;padding:6px 10px;"
         f"text-align:center;font-size:0.82rem;font-weight:600;'>{client}</div>",
         unsafe_allow_html=True,
     )
@@ -119,10 +119,10 @@ filtered = [
 st.markdown("<br>", unsafe_allow_html=True)
 
 CATEGORY_COLORS = {
-    "Sales & Operations": "#dbeafe", "Operations": "#dcfce7",
-    "Finance": "#fef3c7", "Procurement": "#ede9fe",
-    "Compliance": "#fee2e2", "Governance": "#f3f4f6",
-    "Marketing": "#fce7f3", "Reporting": "#e0f2fe",
+    "Sales & Operations": "rgba(37,99,235,0.1)",  "Operations": "rgba(22,163,74,0.1)",
+    "Finance": "rgba(217,119,6,0.1)",              "Procurement": "rgba(124,58,237,0.1)",
+    "Compliance": "rgba(220,38,38,0.1)",           "Governance": "rgba(128,128,128,0.1)",
+    "Marketing": "rgba(219,39,119,0.1)",           "Reporting": "rgba(6,182,212,0.1)",
 }
 
 for tool in filtered:
@@ -131,11 +131,11 @@ for tool in filtered:
     is_live = tool["name"] in live
     mcp_tag = (
         " &nbsp;<span style='background:#16a34a;color:white;border-radius:4px;"
-        "padding:1px 8px;font-size:0.72rem;font-weight:700;'>MCP</span>"
+        "padding:1px 8px;font-size:0.72rem;font-weight:700;letter-spacing:0.5px;'>MCP</span>"
         if tool["mcp_registered"] else ""
     )
     live_tag = (
-        " &nbsp;<span style='color:#16a34a;font-size:0.8rem;'>● Live</span>"
+        " &nbsp;<span style='color:#16a34a;font-size:0.8rem;'>Live</span>"
         if is_live else ""
     )
 
@@ -152,8 +152,8 @@ for tool in filtered:
             st.markdown("**Input Schema**")
             for field, dtype in tool["input_schema"].items():
                 st.markdown(
-                    f"<code style='background:#f3f4f6;padding:1px 6px;border-radius:4px;'>{field}</code> "
-                    f"<span style='color:#6b7280;font-size:0.87rem;'>{dtype}</span>",
+                    f"<code style='background:rgba(128,128,128,0.12);padding:1px 6px;border-radius:4px;'>{field}</code> "
+                    f"<span style='opacity:0.55;font-size:0.87rem;'>{dtype}</span>",
                     unsafe_allow_html=True,
                 )
             st.markdown("<br>", unsafe_allow_html=True)
@@ -161,8 +161,8 @@ for tool in filtered:
             st.markdown("**Output Schema**")
             for field, dtype in tool["output_schema"].items():
                 st.markdown(
-                    f"<code style='background:#f3f4f6;padding:1px 6px;border-radius:4px;'>{field}</code> "
-                    f"<span style='color:#6b7280;font-size:0.87rem;'>{dtype}</span>",
+                    f"<code style='background:rgba(128,128,128,0.12);padding:1px 6px;border-radius:4px;'>{field}</code> "
+                    f"<span style='opacity:0.55;font-size:0.87rem;'>{dtype}</span>",
                     unsafe_allow_html=True,
                 )
 

@@ -45,18 +45,18 @@ for i in range(0, len(filtered), 2):
                 st.markdown("**Tools**")
                 if agent["tools"]:
                     pills = " ".join(
-                        f"<span style='background:#dbeafe;color:#1d4ed8;border-radius:4px;"
+                        f"<span style='background:rgba(27,82,153,0.1);color:var(--primary-color);border-radius:4px;"
                         f"padding:2px 9px;font-size:0.77rem;font-weight:600;margin:2px;'>{t}</span>"
                         for t in agent["tools"]
                     )
                     st.markdown(pills, unsafe_allow_html=True)
                 else:
-                    st.markdown("<span style='color:#9ca3af;font-size:0.85rem;'>No direct tool calls</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='opacity:0.45;font-size:0.85rem;'>No direct tool calls</span>", unsafe_allow_html=True)
 
                 if agent.get("systems"):
                     st.markdown("**Integrates with**")
                     sys_pills = " ".join(
-                        f"<span style='background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;"
+                        f"<span style='background:rgba(128,128,128,0.1);border:1px solid rgba(128,128,128,0.2);border-radius:4px;"
                         f"padding:2px 9px;font-size:0.77rem;margin:2px;'>{s}</span>"
                         for s in agent["systems"]
                     )
@@ -64,14 +64,14 @@ for i in range(0, len(filtered), 2):
 
                 st.markdown("**Approval Rules**")
                 st.markdown(
-                    f"<div style='color:#6b7280;font-size:0.87rem;'>{agent['approval_rules']}</div>",
+                    f"<div style='opacity:0.6;font-size:0.87rem;'>{agent['approval_rules']}</div>",
                     unsafe_allow_html=True,
                 )
 
                 st.markdown("**Example prompt**")
                 st.markdown(
-                    f"<div style='background:#f3f4f6;border-radius:6px;padding:0.5rem 0.75rem;"
-                    f"font-size:0.87rem;color:#374151;font-style:italic;'>"
+                    f"<div style='background:rgba(128,128,128,0.08);border-radius:6px;padding:0.5rem 0.75rem;"
+                    f"font-size:0.87rem;font-style:italic;'>"
                     f"&ldquo;{agent['example_prompt']}&rdquo;</div>",
                     unsafe_allow_html=True,
                 )

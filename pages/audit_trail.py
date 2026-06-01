@@ -98,7 +98,7 @@ for event in filtered:
             st.markdown(f"**Actor:** {event['actor']} &nbsp;·&nbsp; **Agent:** {event['agent_name']}")
         with rr:
             st.markdown(
-                f"<div style='color:#6b7280;font-size:0.83rem;text-align:right;'>{event['timestamp']}</div>",
+                f"<div style='opacity:0.5;font-size:0.83rem;text-align:right;'>{event['timestamp']}</div>",
                 unsafe_allow_html=True,
             )
         st.markdown(event["description"])

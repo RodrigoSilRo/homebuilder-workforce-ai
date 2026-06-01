@@ -71,10 +71,10 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Color maps ─────────────────────────────────────────────────────────────────
 STATUS_COLORS = {
-    "pending":   ("#fef3c7", "#92400e", "⏳"),
-    "approved":  ("#dcfce7", "#166534", "✅"),
-    "rejected":  ("#fee2e2", "#991b1b", "❌"),
-    "escalated": ("#ede9fe", "#5b21b6", "⬆️"),
+    "pending":   ("rgba(217,119,6,0.12)",  "#d97706", "⏳"),
+    "approved":  ("rgba(22,163,74,0.12)",  "#16a34a", "✓"),
+    "rejected":  ("rgba(220,38,38,0.12)",  "#dc2626", "✕"),
+    "escalated": ("rgba(124,58,237,0.12)", "#7c3aed", "↑"),
 }
 RISK_COLORS = {"high": "#dc2626", "medium": "#d97706", "low": "#16a34a"}
 
@@ -114,8 +114,8 @@ for req in filtered:
 
         if req.get("flags"):
             flags_html = " ".join(
-                f"<span style='background:#fee2e2;color:#991b1b;border-radius:4px;"
-                f"padding:2px 9px;font-size:0.77rem;font-weight:600;margin:2px;'>⚠ {f}</span>"
+                f"<span style='background:rgba(220,38,38,0.1);color:#dc2626;border:1px solid rgba(220,38,38,0.3);border-radius:4px;"
+                f"padding:2px 9px;font-size:0.77rem;font-weight:600;margin:2px;'>! {f}</span>"
                 for f in req["flags"]
             )
             st.markdown(flags_html, unsafe_allow_html=True)

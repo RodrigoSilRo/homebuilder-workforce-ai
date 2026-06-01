@@ -112,7 +112,7 @@ with right:
             if agent["tools"]:
                 st.markdown("**Allowed Tools:**")
                 pills = " ".join(
-                    f"<span style='background:#dbeafe;color:#1d4ed8;border-radius:4px;"
+                    f"<span style='background:rgba(27,82,153,0.1);color:var(--primary-color);border-radius:4px;"
                     f"padding:2px 9px;font-size:0.77rem;font-weight:600;margin:2px;'>{t}</span>"
                     for t in agent["tools"]
                 )
@@ -121,7 +121,7 @@ with right:
             if agent["data_sources"]:
                 st.markdown("**Data Sources:**")
                 ds_pills = " ".join(
-                    f"<span style='background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;"
+                    f"<span style='background:rgba(128,128,128,0.1);border:1px solid rgba(128,128,128,0.2);border-radius:4px;"
                     f"padding:2px 9px;font-size:0.77rem;margin:2px;'>{d}</span>"
                     for d in agent["data_sources"]
                 )

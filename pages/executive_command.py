@@ -5,11 +5,14 @@ from services.llm import has_llm
 
 st.markdown("""
 <style>
-.tool-pill { display:inline-block; background:#dbeafe; color:#1d4ed8; border-radius:4px;
+.tool-pill { display:inline-block; background:rgba(27,82,153,0.12); color:var(--primary-color);
+             border:1px solid rgba(27,82,153,0.25); border-radius:4px;
              padding:2px 10px; font-size:0.78rem; font-weight:600; margin:2px; }
-.critic-box { background:#fefce8; border:1px solid #fde68a; border-radius:8px; padding:1rem 1.2rem; }
-.step-item { background:#f9fafb; border-left:3px solid #2563eb; padding:0.4rem 0.75rem;
-             margin:0.25rem 0; border-radius:0 6px 6px 0; font-size:0.88rem; }
+.critic-box { background:rgba(234,179,8,0.07); border:1px solid rgba(234,179,8,0.3);
+              border-radius:8px; padding:1rem 1.2rem; }
+.step-item { background:rgba(27,82,153,0.06); border-left:3px solid var(--primary-color);
+             padding:0.4rem 0.75rem; margin:0.25rem 0;
+             border-radius:0 6px 6px 0; font-size:0.88rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -52,7 +55,7 @@ with col_btn:
 
 if not run_clicked:
     st.markdown(
-        "<div style='text-align:center;color:#9ca3af;padding:3rem 0;'>"
+        "<div style='text-align:center;opacity:0.4;padding:3rem 0;'>"
         "Select a prompt and click <strong>Run Analysis</strong> to start the LangGraph pipeline."
         "</div>",
         unsafe_allow_html=True,
@@ -170,17 +173,17 @@ with left:
     <div class="critic-box">
     <strong>🛡️ Critic / Governance Validation</strong><br><br>
     <table style="width:100%;font-size:0.9rem;">
-      <tr><td style="color:#6b7280;width:55%">Evidence coverage</td>
+      <tr><td style="opacity:0.55;width:55%">Evidence coverage</td>
           <td><strong>{validation.get('evidence_coverage', 'Complete')}</strong></td></tr>
-      <tr><td style="color:#6b7280;">Unsupported claims</td>
+      <tr><td style="opacity:0.55;">Unsupported claims</td>
           <td><strong>{validation.get('unsupported_claims', 'None')}</strong></td></tr>
-      <tr><td style="color:#6b7280;">Human approval required</td>
+      <tr><td style="opacity:0.55;">Human approval required</td>
           <td><strong>{'Yes — ' + validation.get('approval_reason','') if approval else 'No'}</strong></td></tr>
-      <tr><td style="color:#6b7280;">Risk level</td>
+      <tr><td style="opacity:0.55;">Risk level</td>
           <td><strong>{risk.capitalize()}</strong></td></tr>
-      <tr><td style="color:#6b7280;">Tool calls logged to DB</td>
+      <tr><td style="opacity:0.55;">Tool calls logged to DB</td>
           <td><strong>{n_tools} unique tools</strong></td></tr>
-      <tr><td style="color:#6b7280;">LLM mode</td>
+      <tr><td style="opacity:0.55;">LLM mode</td>
           <td><strong>{'Active' if llm_active else 'Rule-based fallback'}</strong></td></tr>
     </table>
     </div>""", unsafe_allow_html=True)
@@ -227,15 +230,15 @@ with right:
     else:
         for i, rec in enumerate(actions, 1):
             r   = rec.get("risk", "low")
-            bg  = {"high": "#fee2e2", "medium": "#fef3c7", "low": "#dcfce7"}.get(r, "#f3f4f6")
-            tc  = {"high": "#991b1b", "medium": "#92400e", "low": "#166534"}.get(r, "#374151")
+            bg  = {"high": "rgba(220,38,38,0.1)", "medium": "rgba(217,119,6,0.1)", "low": "rgba(22,163,74,0.1)"}.get(r, "rgba(0,0,0,0.05)")
+            bc  = {"high": "rgba(220,38,38,0.4)", "medium": "rgba(217,119,6,0.4)", "low": "rgba(22,163,74,0.4)"}.get(r, "rgba(0,0,0,0.15)")
             tag = (
-                f" → <em style='font-size:0.78rem;color:#6b7280;'>Approver: {rec['approver']}</em>"
+                f" &nbsp;<span style='font-size:0.78rem;opacity:0.6;'>→ Approver: {rec['approver']}</span>"
                 if rec.get("requires_approval")
-                else " <span style='font-size:0.78rem;color:#16a34a;'>✓ Auto-proceed</span>"
+                else " &nbsp;<span style='font-size:0.78rem;color:#16a34a;font-weight:600;'>Auto-proceed</span>"
             )
             st.markdown(
-                f"<div style='background:{bg};border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.4rem;'>"
+                f"<div style='background:{bg};border:1px solid {bc};border-radius:8px;padding:0.65rem 1rem;margin-bottom:0.4rem;'>"
                 f"<strong>{i}.</strong> {rec['action']}{tag}</div>",
                 unsafe_allow_html=True,
             )
