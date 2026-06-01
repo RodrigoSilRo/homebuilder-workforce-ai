@@ -137,8 +137,3 @@ with right:
                     st.switch_page("pages/agent_marketplace.py")
 
 st.markdown("---")
-st.info(
-    "**Note:** In Phase 1, agent configurations are stored locally. "
-    "Phase 3 (LangGraph integration) will connect these configurations to a live agent runner backed by a real LLM.",
-    icon="ℹ️",
-)

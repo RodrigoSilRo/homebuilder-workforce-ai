@@ -5,8 +5,8 @@ st.title("🏛️ Architecture")
 st.caption("Technical design, Mermaid diagram, Palantir Foundry mapping with 30-day migration plan, and AWS deployment architecture.")
 st.markdown("---")
 
-tab_diagram, tab_components, tab_foundry, tab_aws, tab_phases = st.tabs([
-    "System Diagram", "Components", "Palantir Foundry Mapping", "AWS Architecture", "Build Phases"
+tab_diagram, tab_components, tab_foundry, tab_aws = st.tabs([
+    "System Diagram", "Components", "Palantir Foundry Mapping", "AWS Architecture"
 ])
 
 # ── Tab: System Diagram ───────────────────────────────────────────────────────
@@ -425,30 +425,6 @@ AWS_ACCESS_KEY_ID=your_key_id
 AWS_SECRET_ACCESS_KEY=your_secret
 AWS_REGION=us-east-1
 AWS_BEDROCK_MODEL=anthropic.claude-haiku-4-5-20251001-v1:0""", language="bash")
-
-# ── Tab: Build Phases ──────────────────────────────────────────────────────────
-with tab_phases:
-    st.subheader("Development Phases")
-
-    phases = [
-        ("Phase 1", "Static Demo MVP",            "Streamlit shell, 9 pages, mock data, simulated agent runs"),
-        ("Phase 2", "Database + Tools",            "13-table schema, seed data, 8 real tool modules, tool call logging"),
-        ("Phase 3", "LangGraph Agents",            "10-node StateGraph, 8 specialist agents, LLM classification + synthesis"),
-        ("Phase 4", "Approval + Audit",            "Per-action APR routing, escalation rules engine, 24h auto-escalation"),
-        ("Phase 5", "MCP Integration",             "FastMCP server, 11 tools registered, Claude Desktop config"),
-        ("Phase 6", "Monitoring + Evals",          "4 eval cases, drift detection, pytest suite, CLI runner — 4/4 passing"),
-        ("Phase 7", "Polish + Deploy",             "README, Dockerfile, docker-compose, Render config"),
-        ("Phase 8", "RAG + Bedrock + Foundry",     "ChromaDB semantic policy search, AWS Bedrock LLM, ERP/CRM/HRIS language, full Foundry mapping"),
-    ]
-
-    for phase, title, desc in phases:
-        st.markdown(
-            f"<div style='background:#dcfce7;border:1px solid #16a34a;border-radius:8px;"
-            f"padding:0.7rem 1rem;margin-bottom:0.5rem;'>"
-            f"<strong>✅ {phase}</strong> — {title}<br>"
-            f"<span style='color:#6b7280;font-size:0.87rem;'>{desc}</span></div>",
-            unsafe_allow_html=True,
-        )
 
 st.markdown("---")
 st.caption("Built by Rodrigo Rosa — Software Engineer & Technical Founder")
