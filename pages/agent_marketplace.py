@@ -29,7 +29,16 @@ for i in range(0, len(filtered), 2):
             with st.container(border=True):
                 h1, h2 = st.columns([1, 6])
                 with h1:
-                    st.markdown(f"<div style='font-size:2rem;'>{agent['icon']}</div>", unsafe_allow_html=True)
+                    words = [w for w in agent['name'].replace('/', ' ').split()
+                             if w.lower() not in ('agent', 'the', 'a', 'an', 'and')]
+                    initials = "".join(w[0] for w in words[:2]).upper()
+                    st.markdown(
+                        f"<div style='width:34px;height:34px;border-radius:6px;"
+                        f"background:var(--primary-color);color:white;"
+                        f"display:flex;align-items:center;justify-content:center;"
+                        f"font-size:0.72rem;font-weight:800;letter-spacing:0.5px;margin-top:4px;'>{initials}</div>",
+                        unsafe_allow_html=True,
+                    )
                 with h2:
                     status_color = "#16a34a" if agent["status"] == "active" else "#6b7280"
                     st.markdown(

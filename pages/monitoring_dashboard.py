@@ -73,8 +73,8 @@ with tab_runs:
                                  name="Failures", line=dict(color="#dc2626", width=1.5, dash="dash")))
         fig.update_layout(height=260, margin=dict(l=0,r=0,t=0,b=0),
                           legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                          plot_bgcolor="white", paper_bgcolor="white",
-                          xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor="#f3f4f6"))
+                          plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                          xaxis=dict(showgrid=False), yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.15)"))
         st.plotly_chart(fig, use_container_width=True)
 
         st.subheader("Recent Runs")
@@ -104,8 +104,8 @@ with tab_tools:
                          height=380)
         fig_lat.update_layout(margin=dict(l=0,r=0,t=0,b=0),
                                coloraxis_colorbar=dict(title="Success %", thickness=12),
-                               plot_bgcolor="white", paper_bgcolor="white",
-                               xaxis=dict(showgrid=True, gridcolor="#f3f4f6"),
+                               plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                               xaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.15)"),
                                yaxis=dict(showgrid=False))
         st.plotly_chart(fig_lat, use_container_width=True)
 
@@ -133,8 +133,8 @@ with tab_evals:
 
             for r in results:
                 icon  = "✅" if r["passed"] else "❌"
-                color = "#dcfce7" if r["passed"] else "#fee2e2"
-                tc    = "#166534" if r["passed"] else "#991b1b"
+                color = "rgba(22,163,74,0.12)" if r["passed"] else "rgba(220,38,38,0.12)"
+                tc    = "#16a34a" if r["passed"] else "#dc2626"
                 with st.container(border=True):
                     st.markdown(
                         f"{icon} **{r['id']}** — {r['name']} "
@@ -173,8 +173,8 @@ with tab_evals:
             )
             fig_drift.update_layout(
                 margin=dict(l=0,r=0,t=40,b=0),
-                plot_bgcolor="white", paper_bgcolor="white",
-                yaxis=dict(range=[0,105], showgrid=True, gridcolor="#f3f4f6"),
+                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                yaxis=dict(range=[0,105], showgrid=True, gridcolor="rgba(128,128,128,0.15)"),
                 xaxis=dict(showgrid=False),
                 legend=dict(orientation="h", yanchor="top", y=-0.2),
                 title=dict(font=dict(size=13)),
@@ -187,8 +187,8 @@ with tab_evals:
             latest = df_hist.sort_values("run_at", ascending=False).drop_duplicates("eval_id")
             for _, row in latest.iterrows():
                 pf    = row["pass_fail"]
-                color = "#dcfce7" if pf == "PASS" else "#fee2e2"
-                tc    = "#166534" if pf == "PASS" else "#991b1b"
+                color = "rgba(22,163,74,0.12)" if pf == "PASS" else "rgba(220,38,38,0.12)"
+                tc    = "#16a34a" if pf == "PASS" else "#dc2626"
                 icon  = "✅" if pf == "PASS" else "❌"
                 st.markdown(
                     f"{icon} **{row['eval_id']}** — {row['eval_name']} "
@@ -218,7 +218,7 @@ with tab_gov:
             textinfo="label+percent",
         ))
         fig_donut.update_layout(height=260, margin=dict(l=0,r=0,t=0,b=0),
-                                 showlegend=False, paper_bgcolor="white",
+                                 showlegend=False, paper_bgcolor="rgba(0,0,0,0)",
                                  title=dict(text="Approval Queue Status", x=0.5, font=dict(size=13)))
         st.plotly_chart(fig_donut, use_container_width=True)
 
@@ -234,8 +234,8 @@ with tab_gov:
             text=list(risk_counts.values()), textposition="outside",
         ))
         fig_risk.update_layout(height=260, margin=dict(l=0,r=0,t=30,b=0),
-                                plot_bgcolor="white", paper_bgcolor="white",
-                                yaxis=dict(showgrid=True, gridcolor="#f3f4f6"),
+                                plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+                                yaxis=dict(showgrid=True, gridcolor="rgba(128,128,128,0.15)"),
                                 xaxis=dict(showgrid=False),
                                 title=dict(text="Requests by Risk Level", x=0.5, font=dict(size=13)))
         st.plotly_chart(fig_risk, use_container_width=True)

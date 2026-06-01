@@ -5,8 +5,8 @@ st.title("🏛️ Architecture")
 st.caption("Technical design, Mermaid diagram, Palantir Foundry mapping with 30-day migration plan, and AWS deployment architecture.")
 st.markdown("---")
 
-tab_diagram, tab_components, tab_foundry, tab_aws = st.tabs([
-    "System Diagram", "Components", "Palantir Foundry Mapping", "AWS Architecture"
+tab_diagram, tab_components, tab_foundry, tab_aws, tab_prompts = st.tabs([
+    "System Diagram", "Components", "Palantir Foundry Mapping", "AWS Architecture", "Prompt Engineering"
 ])
 
 # ── Tab: System Diagram ───────────────────────────────────────────────────────
@@ -207,7 +207,7 @@ with tab_components:
         cols = st.columns([1.5, 1.2, 5])
         cols[0].markdown(f"**{name}**")
         cols[1].markdown(
-            f"<span style='background:#f3f4f6;border-radius:4px;padding:2px 8px;font-size:0.8rem;'>{category}</span>",
+            f"<span style='background:rgba(128,128,128,0.1);border-radius:4px;padding:2px 8px;font-size:0.8rem;'>{category}</span>",
             unsafe_allow_html=True,
         )
         cols[2].markdown(desc)
@@ -345,14 +345,14 @@ with tab_foundry:
             wl, wr = st.columns([1, 4])
             with wl:
                 st.markdown(
-                    f"<div style='background:#2563eb;color:white;border-radius:8px;"
+                    f"<div style='background:var(--primary-color);color:white;border-radius:8px;"
                     f"padding:0.5rem;text-align:center;font-weight:700;'>{w['week']}</div>",
                     unsafe_allow_html=True,
                 )
             with wr:
                 st.markdown(f"**{w['title']}**")
                 st.markdown(
-                    f"<span style='font-size:0.82rem;color:#6b7280;'>"
+                    f"<span style='font-size:0.82rem;opacity:0.55;'>"
                     f"Foundry: `{w['foundry']}` ← maps from: `{w['ours']}`</span>",
                     unsafe_allow_html=True,
                 )
@@ -425,6 +425,182 @@ AWS_ACCESS_KEY_ID=your_key_id
 AWS_SECRET_ACCESS_KEY=your_secret
 AWS_REGION=us-east-1
 AWS_BEDROCK_MODEL=anthropic.claude-haiku-4-5-20251001-v1:0""", language="bash")
+
+# ── Tab: Prompt Engineering ───────────────────────────────────────────────────
+with tab_prompts:
+    st.subheader("Prompt Engineering")
+    st.caption(
+        "The exact system prompts and user message templates powering every LLM call in the pipeline. "
+        "Each prompt is designed to enforce evidence grounding, prevent hallucination, and produce parseable outputs."
+    )
+
+    st.markdown("### Design Principles")
+    p1, p2, p3 = st.columns(3)
+    with p1:
+        st.markdown("**Single-output classification**")
+        st.markdown(
+            "<span style='font-size:0.85rem;opacity:0.65;'>"
+            "Classify prompts return one word only — no explanation, no ambiguity. "
+            "Output is machine-parseable without regex; rule-based fallback runs first."
+            "</span>", unsafe_allow_html=True,
+        )
+    with p2:
+        st.markdown("**Evidence-before-synthesis**")
+        st.markdown(
+            "<span style='font-size:0.85rem;opacity:0.65;'>"
+            "The executive summary LLM receives pre-validated agent findings, not raw user input. "
+            "A hard constraint ('Do not add claims not supported by the findings') closes the hallucination loop."
+            "</span>", unsafe_allow_html=True,
+        )
+    with p3:
+        st.markdown("**Deterministic governance**")
+        st.markdown(
+            "<span style='font-size:0.85rem;opacity:0.65;'>"
+            "The Critic / Governance Agent makes zero LLM calls. "
+            "Approval triggers and risk levels are deterministic Python lambdas — they cannot be convinced by natural language."
+            "</span>", unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+    st.markdown("### Agent Prompts")
+
+    with st.expander("**classify_node** — Request Classification (Executive Orchestrator)", expanded=True):
+        lc, rc = st.columns([3, 2])
+        with lc:
+            st.markdown("**System prompt**")
+            st.code(
+                "Classify the user request into EXACTLY one category.\n"
+                "Respond with only the category word, nothing else.\n"
+                "Categories: sales_ops, incentive, vendor, workflow, general\n"
+                "sales_ops = about community performance, sales metrics, or underperformance\n"
+                "incentive = about pricing, discounts, or improving sales within margin constraints\n"
+                "vendor    = about vendor approval, onboarding, or risk review\n"
+                "workflow  = about how to do something, policies, or step-by-step guidance\n"
+                "general   = anything else",
+                language="text",
+            )
+        with rc:
+            st.markdown("**Design decisions**")
+            for note in [
+                "`EXACTLY one category` — eliminates hedging responses",
+                "`Respond with only the word` — zero-parse output, no regex needed",
+                "Each category has a clear definition — reduces ambiguity at decision boundaries",
+                "Rule-based classifier runs first; LLM only overrides when key is present",
+            ]:
+                st.markdown(f"- {note}")
+
+    with st.expander("**generate_response_node** — Executive Synthesis (Executive Orchestrator)"):
+        lc, rc = st.columns([3, 2])
+        with lc:
+            st.markdown("**System prompt**")
+            st.code(
+                "You are a senior executive analyst at a national homebuilder.\n"
+                "Using the agent findings provided, write a concise 3-4 sentence executive summary.\n"
+                "Be specific with data points (numbers, percentages, names).\n"
+                "State the key problem, root cause, and recommended direction.\n"
+                "Do not add claims not supported by the findings.\n"
+                "Do not use bullet points — write flowing prose.",
+                language="text",
+            )
+            st.markdown("**User message template**")
+            st.code(
+                "Business question: {user_prompt}\n\n"
+                "Agent findings:\n"
+                "[Community Performance Agent] {finding}\n"
+                "[Finance / Incentive Agent] {finding}\n"
+                "[Critic / Governance Agent] {finding}\n"
+                "...",
+                language="text",
+            )
+        with rc:
+            st.markdown("**Design decisions**")
+            for note in [
+                "LLM receives validated agent findings, not raw user input — blocks prompt injection",
+                "`Do not add claims not supported` — hard evidence constraint before synthesis",
+                "`3-4 sentences` — explicit length constraint prevents verbose outputs",
+                "`Flowing prose` — avoids bullet-point-heavy AI-looking summaries",
+                "Persona frames tone without overpromising executive authority",
+            ]:
+                st.markdown(f"- {note}")
+
+    with st.expander("**associate_productivity** — Corporate Workflow Advisor"):
+        lc, rc = st.columns([3, 2])
+        with lc:
+            st.markdown("**System prompt**")
+            st.code(
+                "You are a corporate workflow advisor at a national homebuilder.\n"
+                "Answer the associate's question directly and concisely using the policy steps.\n"
+                "Highlight key approval thresholds and who needs to sign off.\n"
+                "One paragraph, professional tone, no bullet points.",
+                language="text",
+            )
+            st.markdown("**User message template**")
+            st.code(
+                "Associate question: {user_prompt}\n\n"
+                "Policy: {policy_title} ({business_function})\n"
+                "Steps:\n"
+                "1. {step_1}\n"
+                "2. {step_2}\n"
+                "...\n"
+                "Approval threshold: ${threshold}\n"
+                "Escalation rule: {escalation_rule}",
+                language="text",
+            )
+        with rc:
+            st.markdown("**Design decisions**")
+            for note in [
+                "Policy retrieved via ChromaDB RAG *before* the LLM call",
+                "LLM answers from retrieved steps — not from training-data memory",
+                "Approval thresholds injected explicitly — LLM cannot hallucinate them",
+                "Falls back to template answer if LLM unavailable — zero hard dependency on key",
+            ]:
+                st.markdown(f"- {note}")
+
+    with st.expander("**critic_validate** — Governance Agent (No LLM — Deterministic)"):
+        lc, rc = st.columns([3, 2])
+        with lc:
+            st.markdown("**No system prompt — pure Python:**")
+            st.code(
+                """APPROVAL_TRIGGERS = [
+    ("incentive",           lambda tr: any(
+        not r.get("blocked_by_policy")
+        and abs(r.get("margin_impact_pct", 0)) >= 1.0
+        for r in (tr.get("incentive") or {}).values()
+    )),
+    ("vendor_high_risk",    lambda tr: any(
+        d["profile"]["risk_level"] == "high"
+        for d in tr.get("vendor", {}).values()
+    )),
+    ("vendor_insurance",    lambda tr: any(
+        d["profile"]["insurance_status"] != "current"
+        for d in tr.get("vendor", {}).values()
+    )),
+    ("construction_10plus", lambda tr:
+        tr.get("construction_delays", {})
+          .get("total_affected_closings", 0) > 10),
+    ("campaign",            lambda tr: "campaign" in tr),
+]""",
+                language="python",
+            )
+        with rc:
+            st.markdown("**Why no LLM?**")
+            st.markdown(
+                "Governance decisions must be **deterministic and auditable**. "
+                "An LLM-based critic could approve a high-risk vendor given a well-crafted prompt. "
+                "These lambda rules cannot be convinced by natural language — the check is binary."
+            )
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("**What it checks:**")
+            for note in [
+                "Evidence completeness (were tool calls made?)",
+                "Unsupported claims (findings without tool evidence)",
+                "5 approval triggers: incentive, vendor risk, insurance, delays, campaigns",
+                "Risk escalation: low → medium → high based on which triggers fire",
+            ]:
+                st.markdown(f"- {note}")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.caption("Source: `agents/executive.py` · `agents/associate_productivity.py` · `agents/critic.py`")
 
 st.markdown("---")
 st.caption("Built by Rodrigo Rosa — Software Engineer & Technical Founder")

@@ -80,7 +80,7 @@ Full architecture diagram (Mermaid + Palantir Foundry mapping): see **Architectu
 ## Quick Start (Local)
 
 ```bash
-git clone https://github.com/your-username/homebuilder-workforce-ai
+git clone https://github.com/RodrigoSilRo/homebuilder-workforce-ai
 cd homebuilder-workforce-ai
 
 pip install -r requirements.txt
