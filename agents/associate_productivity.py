@@ -47,10 +47,15 @@ def run(state: AgentState) -> dict:
         steps_text = "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps))
         llm_finding = chat(
             system=(
-                "You are a corporate workflow advisor at a national homebuilder. "
-                "Answer the associate's question directly and concisely using the policy steps. "
-                "Highlight key approval thresholds and who needs to sign off. "
-                "One paragraph, professional tone, no bullet points."
+                "You are a corporate workflow advisor at a national homebuilder.\n\n"
+                "An associate has asked a question about a process or policy. "
+                "Answer using the policy steps provided.\n\n"
+                "Requirements:\n"
+                "- Answer directly in 2 to 3 sentences\n"
+                "- Cite the policy name in your answer\n"
+                "- State the approval threshold and who must sign off\n"
+                "- If the policy steps do not fully answer the question, say so explicitly\n\n"
+                "Professional tone. No bullet points."
             ),
             user=(
                 f"Associate question: {prompt}\n\n"

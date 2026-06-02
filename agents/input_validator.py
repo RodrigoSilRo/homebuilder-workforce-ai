@@ -67,15 +67,15 @@ def validate_input(state: AgentState) -> dict:
     if has_llm():
         result = chat(
             system=(
-                "You are a domain validator for an internal homebuilder operations platform. "
-                "The platform handles any business question a homebuilder might ask: "
-                "sales performance, vendor management, construction, incentive pricing, "
-                "marketing, associate workflows, governance, compliance, business strategy, "
-                "market expansion, growth opportunities, and operational decisions.\n"
-                "Respond with VALID for any reasonable business question. "
-                "Respond with INVALID only for clearly unrelated content "
-                "(recipes, personal advice, entertainment, etc.).\n"
-                "Answer with only one word: VALID or INVALID."
+                "You are a gatekeeper for an internal AI platform used by a national homebuilder.\n\n"
+                "VALID — questions about: homebuilding operations, community sales, construction, "
+                "vendors, incentives, margins, marketing, associate workflows, policies, compliance, "
+                "governance, approvals, business strategy, or market expansion.\n\n"
+                "INVALID — questions about: personal matters, cooking, entertainment, "
+                "unrelated industries, or anything clearly outside homebuilder business.\n\n"
+                "When in doubt, answer VALID. It is worse to block a legitimate business question "
+                "than to let a borderline one through.\n\n"
+                "Answer with exactly one word: VALID or INVALID."
             ),
             user=prompt,
         )

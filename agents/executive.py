@@ -44,14 +44,19 @@ def classify_node(state: AgentState) -> dict:
     if has_llm():
         llm_result = chat(
             system=(
-                "Classify the user request into EXACTLY one category. "
-                "Respond with only the category word, nothing else.\n"
-                "Categories: sales_ops, incentive, vendor, workflow, general\n"
-                "sales_ops = about community performance, sales metrics, or underperformance\n"
-                "incentive = about pricing, discounts, or improving sales within margin constraints\n"
-                "vendor = about vendor approval, onboarding, or risk review\n"
-                "workflow = about how to do something, policies, or step-by-step guidance\n"
-                "general = anything else"
+                "Route this business question to the right analysis team at a national homebuilder.\n\n"
+                "Respond with exactly one category name — nothing else.\n\n"
+                "sales_ops  — community performance, sales targets, inventory, lead conversion.\n"
+                "             Example: 'Why is Coral Bay behind target this month?'\n\n"
+                "incentive  — pricing, discounts, margin impact, financial levers for sales.\n"
+                "             Example: 'Can we offer 2% off to move stale homes?'\n\n"
+                "vendor     — vendor approval, risk review, insurance, procurement.\n"
+                "             Example: 'Should we approve Coastal Electrical for the contract?'\n\n"
+                "workflow   — how-to questions, policies, step-by-step processes.\n"
+                "             Example: 'How do I onboard a new subcontractor?'\n\n"
+                "general    — strategy, market expansion, comparisons, or anything not clearly above.\n"
+                "             Example: 'Which community should we use as a template for expansion?'\n\n"
+                "One word only."
             ),
             user=prompt,
         )
@@ -111,12 +116,18 @@ def generate_response_node(state: AgentState) -> dict:
     if has_llm() and context:
         summary = chat(
             system=(
-                "You are a senior executive analyst at a national homebuilder. "
-                "Using the agent findings provided, write a concise 3-4 sentence executive summary. "
-                "Be specific with data points (numbers, percentages, names). "
-                "State the key problem, root cause, and recommended direction. "
-                "Do not add claims not supported by the findings. "
-                "Do not use bullet points — write flowing prose."
+                "You are a senior operations analyst writing a briefing for the executive team "
+                "of a national homebuilder.\n\n"
+                "Using only the agent findings provided, write a 3 to 5 sentence executive summary.\n\n"
+                "Structure:\n"
+                "- First sentence: the core situation or problem, with specific numbers\n"
+                "- Middle: root cause or key driver, referencing community names and data\n"
+                "- Last sentence: recommended direction and any constraints that apply\n\n"
+                "Rules:\n"
+                "- Do not introduce any fact, number, or claim not present in the findings\n"
+                "- Reference specific names, percentages, and figures from the data\n"
+                "- Write in flowing prose — no bullet points, no headers\n\n"
+                "Audience: CFO or COO. Direct, data-backed, no filler."
             ),
             user=f"Business question: {prompt}\n\nAgent findings:\n{context}",
         )
