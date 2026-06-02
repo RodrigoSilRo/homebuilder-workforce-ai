@@ -469,27 +469,30 @@ with tab_prompts:
         with lc:
             st.markdown("**System prompt**")
             st.code(
-                "Route this business question to the right analysis team at a national homebuilder.\n\n"
-                "Respond with exactly one category name — nothing else.\n\n"
-                "sales_ops  — community performance, sales targets, inventory, lead conversion.\n"
-                "             Example: 'Why is Coral Bay behind target this month?'\n\n"
-                "incentive  — pricing, discounts, margin impact, financial levers for sales.\n"
-                "             Example: 'Can we offer 2% off to move stale homes?'\n\n"
-                "vendor     — vendor approval, risk review, insurance, procurement.\n"
-                "             Example: 'Should we approve Coastal Electrical for the contract?'\n\n"
-                "workflow   — how-to questions, policies, step-by-step processes.\n"
-                "             Example: 'How do I onboard a new subcontractor?'\n\n"
-                "general    — strategy, market expansion, comparisons, or anything not clearly above.\n"
-                "             Example: 'Which community should we use as a template for expansion?'\n\n"
-                "One word only.",
+                "You are routing a business question to the right analysis team\n"
+                "at a national homebuilder.\n\n"
+                "Study these examples — each shows the request and why it maps to that category:\n\n"
+                "Request: 'Why is Coral Bay 39% below target this month?'\n"
+                "→ sales_ops   (asks about community sales performance and metrics)\n\n"
+                "Request: 'Can we offer 2.5% off to close stale homes without hurting margin?'\n"
+                "→ incentive   (pricing scenario with a margin constraint)\n\n"
+                "Request: 'Should we renew Coastal Electrical despite expired insurance?'\n"
+                "→ vendor      (vendor risk and contract approval decision)\n\n"
+                "Request: 'What are the steps an associate follows to escalate a delay?'\n"
+                "→ workflow    (how-to, process, step-by-step guidance)\n\n"
+                "Request: 'Which of our communities is the strongest template for expansion?'\n"
+                "→ general     (strategy, comparison, or market decision)\n\n"
+                "Categories: sales_ops | incentive | vendor | workflow | general\n\n"
+                "Respond with exactly one word — the category name.",
                 language="text",
             )
         with rc:
             st.markdown("**Design decisions**")
             for note in [
-                "Concrete examples per category — LLM anchors to cases, not just descriptions",
-                "`general` explicitly covers strategy and expansion — previously 'anything else'",
-                "`One word only` — zero-parse output, no regex needed",
+                "Few-shot examples with reasoning traces — LLM anchors to cases, not just labels",
+                "Each example shows *why* it maps to that category, not just that it does",
+                "`general` explicitly covers strategy and expansion — not 'anything else'",
+                "`Exactly one word` — zero-parse output, no regex, deterministic downstream routing",
                 "Rule-based classifier runs first; LLM only overrides when key is present",
             ]:
                 st.markdown(f"- {note}")
@@ -499,18 +502,23 @@ with tab_prompts:
         with lc:
             st.markdown("**System prompt**")
             st.code(
-                "You are a senior operations analyst writing a briefing for the executive team\n"
-                "of a national homebuilder.\n\n"
-                "Using only the agent findings provided, write a 3 to 5 sentence executive summary.\n\n"
-                "Structure:\n"
-                "- First sentence: the core situation or problem, with specific numbers\n"
-                "- Middle: root cause or key driver, referencing community names and data\n"
-                "- Last sentence: recommended direction and any constraints that apply\n\n"
-                "Rules:\n"
-                "- Do not introduce any fact, number, or claim not present in the findings\n"
-                "- Reference specific names, percentages, and figures from the data\n"
-                "- Write in flowing prose — no bullet points, no headers\n\n"
-                "Audience: CFO or COO. Direct, data-backed, no filler.",
+                "You are a senior operations analyst writing a briefing for the CFO or COO\n"
+                "of a national homebuilder. They have 30 seconds. Make every word count.\n\n"
+                "TASK: Write a 3-5 sentence executive summary from the agent findings.\n\n"
+                "STRUCTURE:\n"
+                "1. Open with the most critical finding and its specific number\n"
+                "2. Identify the root cause or key driver with evidence\n"
+                "3. If operational: state the recommended action and its constraint or approver\n"
+                "   If strategic: frame the opportunity with the current-state context\n"
+                "4. Close with what requires executive attention or decision\n\n"
+                "HARD RULES:\n"
+                "- Every number, name, and percentage must appear in the findings — add nothing\n"
+                "- If findings do not support a clear conclusion, write:\n"
+                "  'The available data does not support a definitive conclusion on [topic] —\n"
+                "  further investigation is needed before a recommendation can be made.'\n"
+                "- No bullet points, no headers, no filler phrases such as\n"
+                "  'it is important to note' or 'in conclusion'\n"
+                "- Flowing prose only",
                 language="text",
             )
             st.markdown("**User message template**")
@@ -527,10 +535,10 @@ with tab_prompts:
             st.markdown("**Design decisions**")
             for note in [
                 "LLM receives validated agent findings, not raw user input — blocks prompt injection",
-                "`Do not introduce any fact not in the findings` — hard evidence constraint",
-                "Explicit 3-part structure: problem → root cause → recommendation",
-                "`3-5 sentences` — more room for complex multi-agent runs than the old 3-4",
-                "`Audience: CFO or COO` — one line that anchors tone and eliminates filler",
+                "Explicit uncertainty handler: 'data does not support a conclusion' fallback",
+                "Conditional branching: operational vs strategic frames the recommendation differently",
+                "`They have 30 seconds` — anchors brevity better than a sentence count alone",
+                "HARD RULES section separates constraints from structure — clearer to follow",
             ]:
                 st.markdown(f"- {note}")
 
@@ -540,14 +548,22 @@ with tab_prompts:
             st.markdown("**System prompt**")
             st.code(
                 "You are a corporate workflow advisor at a national homebuilder.\n\n"
-                "An associate has asked a question about a process or policy.\n"
-                "Answer using the policy steps provided.\n\n"
-                "Requirements:\n"
-                "- Answer directly in 2 to 3 sentences\n"
-                "- Cite the policy name in your answer\n"
-                "- State the approval threshold and who must sign off\n"
-                "- If the policy steps do not fully answer the question, say so explicitly\n\n"
-                "Professional tone. No bullet points.",
+                "An associate needs guidance on a process. Answer using the policy provided.\n\n"
+                "EXAMPLE OF A GOOD ANSWER:\n"
+                "Question: How do I get a vendor contract approved?\n"
+                "Answer: Per the Vendor Onboarding Policy, contracts under $25,000 require\n"
+                "Division Manager approval, while contracts above $25,000 require VP Procurement\n"
+                "sign-off. Submit the vendor's insurance certificate and risk assessment through\n"
+                "the procurement portal before requesting approval — contracts with expired\n"
+                "insurance cannot proceed regardless of value.\n\n"
+                "NOW ANSWER THE ACTUAL QUESTION:\n"
+                "- 2-3 sentences maximum\n"
+                "- Cite the policy name (e.g. 'Per the [Policy Name]...')\n"
+                "- State the exact approval threshold and who signs off\n"
+                "- If the policy does not fully address the question, end with:\n"
+                "  'The [policy name] does not cover [specific gap] —\n"
+                "  contact [business_function] for further guidance.'\n"
+                "- Professional tone. No bullet points.",
                 language="text",
             )
             st.markdown("**User message template**")
@@ -565,11 +581,11 @@ with tab_prompts:
         with rc:
             st.markdown("**Design decisions**")
             for note in [
-                "Policy retrieved via ChromaDB RAG *before* the LLM call",
-                "LLM answers from retrieved steps — not from training-data memory",
+                "Policy retrieved via ChromaDB RAG *before* the LLM call — grounded in data",
+                "Worked example in prompt shows exact output format, not just instructions",
                 "Approval thresholds injected explicitly — LLM cannot hallucinate them",
-                "`Cite the policy name` — grounds the answer, prevents vague responses",
-                "Explicit fallback instruction when policy doesn't cover the question",
+                "Explicit gap-handling template: names the missing topic and routes to right team",
+                "LLM answers from retrieved steps only — not from training-data memory",
             ]:
                 st.markdown(f"- {note}")
 

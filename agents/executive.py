@@ -44,19 +44,21 @@ def classify_node(state: AgentState) -> dict:
     if has_llm():
         llm_result = chat(
             system=(
-                "Route this business question to the right analysis team at a national homebuilder.\n\n"
-                "Respond with exactly one category name — nothing else.\n\n"
-                "sales_ops  — community performance, sales targets, inventory, lead conversion.\n"
-                "             Example: 'Why is Coral Bay behind target this month?'\n\n"
-                "incentive  — pricing, discounts, margin impact, financial levers for sales.\n"
-                "             Example: 'Can we offer 2% off to move stale homes?'\n\n"
-                "vendor     — vendor approval, risk review, insurance, procurement.\n"
-                "             Example: 'Should we approve Coastal Electrical for the contract?'\n\n"
-                "workflow   — how-to questions, policies, step-by-step processes.\n"
-                "             Example: 'How do I onboard a new subcontractor?'\n\n"
-                "general    — strategy, market expansion, comparisons, or anything not clearly above.\n"
-                "             Example: 'Which community should we use as a template for expansion?'\n\n"
-                "One word only."
+                "You are routing a business question to the right analysis team "
+                "at a national homebuilder.\n\n"
+                "Study these examples — each shows the request and why it maps to that category:\n\n"
+                "Request: 'Why is Coral Bay 39% below target this month?'\n"
+                "→ sales_ops   (asks about community sales performance and metrics)\n\n"
+                "Request: 'Can we offer 2.5% off to close stale homes without hurting margin?'\n"
+                "→ incentive   (pricing scenario with a margin constraint)\n\n"
+                "Request: 'Should we renew Coastal Electrical despite expired insurance?'\n"
+                "→ vendor      (vendor risk and contract approval decision)\n\n"
+                "Request: 'What are the steps an associate follows to escalate a delay?'\n"
+                "→ workflow    (how-to, process, step-by-step guidance)\n\n"
+                "Request: 'Which of our communities is the strongest template for expansion?'\n"
+                "→ general     (strategy, comparison, or market decision)\n\n"
+                "Categories: sales_ops | incentive | vendor | workflow | general\n\n"
+                "Respond with exactly one word — the category name."
             ),
             user=prompt,
         )
@@ -116,18 +118,23 @@ def generate_response_node(state: AgentState) -> dict:
     if has_llm() and context:
         summary = chat(
             system=(
-                "You are a senior operations analyst writing a briefing for the executive team "
-                "of a national homebuilder.\n\n"
-                "Using only the agent findings provided, write a 3 to 5 sentence executive summary.\n\n"
-                "Structure:\n"
-                "- First sentence: the core situation or problem, with specific numbers\n"
-                "- Middle: root cause or key driver, referencing community names and data\n"
-                "- Last sentence: recommended direction and any constraints that apply\n\n"
-                "Rules:\n"
-                "- Do not introduce any fact, number, or claim not present in the findings\n"
-                "- Reference specific names, percentages, and figures from the data\n"
-                "- Write in flowing prose — no bullet points, no headers\n\n"
-                "Audience: CFO or COO. Direct, data-backed, no filler."
+                "You are a senior operations analyst writing a briefing for the CFO or COO "
+                "of a national homebuilder. They have 30 seconds. Make every word count.\n\n"
+                "TASK: Write a 3-5 sentence executive summary from the agent findings.\n\n"
+                "STRUCTURE:\n"
+                "1. Open with the most critical finding and its specific number\n"
+                "2. Identify the root cause or key driver with evidence\n"
+                "3. If operational: state the recommended action and its constraint or approver\n"
+                "   If strategic: frame the opportunity with the current-state context\n"
+                "4. Close with what requires executive attention or decision\n\n"
+                "HARD RULES:\n"
+                "- Every number, name, and percentage must appear in the findings — add nothing\n"
+                "- If findings do not support a clear conclusion, write: "
+                "'The available data does not support a definitive conclusion on [topic] — "
+                "further investigation is needed before a recommendation can be made.'\n"
+                "- No bullet points, no headers, no filler phrases such as "
+                "'it is important to note' or 'in conclusion'\n"
+                "- Flowing prose only"
             ),
             user=f"Business question: {prompt}\n\nAgent findings:\n{context}",
         )

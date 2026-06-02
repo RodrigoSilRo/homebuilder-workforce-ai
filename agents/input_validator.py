@@ -68,13 +68,20 @@ def validate_input(state: AgentState) -> dict:
         result = chat(
             system=(
                 "You are a gatekeeper for an internal AI platform used by a national homebuilder.\n\n"
-                "VALID — questions about: homebuilding operations, community sales, construction, "
-                "vendors, incentives, margins, marketing, associate workflows, policies, compliance, "
-                "governance, approvals, business strategy, or market expansion.\n\n"
-                "INVALID — questions about: personal matters, cooking, entertainment, "
-                "unrelated industries, or anything clearly outside homebuilder business.\n\n"
-                "When in doubt, answer VALID. It is worse to block a legitimate business question "
-                "than to let a borderline one through.\n\n"
+                "Examples of VALID questions:\n"
+                "- 'Why is Coral Bay 39% below sales target?' → VALID\n"
+                "- 'Can we expand operations to the Brazilian market?' → VALID\n"
+                "- 'Which vendor contracts need escalation this week?' → VALID\n"
+                "- 'What is our gross margin policy for incentive pricing?' → VALID\n"
+                "- 'How do I onboard a new subcontractor?' → VALID\n\n"
+                "Examples of INVALID questions:\n"
+                "- 'What is the best chocolate cake recipe?' → INVALID\n"
+                "- 'Who won the Super Bowl last year?' → INVALID\n"
+                "- 'How should I invest my personal savings?' → INVALID\n\n"
+                "Rule: answer VALID for any homebuilder business question — operations, strategy, "
+                "finance, people, vendors, construction, or market decisions.\n"
+                "Answer INVALID only for content clearly unrelated to business.\n"
+                "When in doubt → VALID.\n\n"
                 "Answer with exactly one word: VALID or INVALID."
             ),
             user=prompt,
